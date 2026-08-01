@@ -1,0 +1,184 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Release\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\main.c LARGE OPTIMIZE(9,SIZE) BROWSE ORDER INTVECTOR(0X000C) 
+                    -INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\Release\
+                    -Listings\main.lst) OBJECT(.\Release\Objects\main.obj)
+
+line level    source
+
+   1          /**
+   2           ******************************************************************************
+   3           * @file    main.c
+   4           * @author  HUGE-IC Application Team
+   5           * @version V1.0.0
+   6           * @date    05-11-2022
+   7           * @brief   Main program body
+   8           ******************************************************************************
+   9           * @attention
+  10           *
+  11           * <h2><center>&copy; COPYRIGHT 2021 HUGE-IC</center></h2>
+  12           *
+  13           * 版权说明后续补上
+  14           *
+  15           ******************************************************************************
+  16           */
+  17          
+  18          /* Includes ------------------------------------------------------------------*/
+  19          #include "include.h"
+  20          #include "user_config.h"
+  21          #include "string.h"
+  22          
+  23          #if USER_DEBUG_ENABLE
+  24          void debug_pin_init(void)
+  25          {
+  26   1          // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
+  27   1          // P0_MD0 |= GPIO_P00_MODE_SEL(0x01); // 输出模式
+  28   1          // FOUT_S00 = GPIO_FOUT_AF_FUNC;
+  29   1          // DEBUG_PIN = 0;
+  30   1      }
+  31          #endif
+  32          
+  33          void user_init(void)
+  34          {
+  35   1      #if USER_DEBUG_ENABLE
+  36   1          debug_pin_init();
+  37   1          uart0_debug_init();
+  38   1          printf("sys reset\n");
+  39   1      #endif
+  40   1      
+  41   1      #if PIN_LEVEL_SCAN_ENABLE
+  42   1          // pin_level_scan_config();
+  43   1      #endif
+  44   1      
+  45   1      #if IO_KEY_ENABLE
+  46   1          // io_key_config(); // 按键的配置
+  47   1      #endif
+  48   1      
+  49   1      #if SPEED_SCAN_ENABLE
+  50   1          // speed_scan_config(); // 时速扫描的配置
+  51   1      #endif
+  52   1      
+  53   1      #if ENGINE_SPEED_SCAN_ENABLE
+C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 2   
+
+  54   1          // engine_speed_scan_config(); // 发动机转速扫描的配置
+  55   1      #endif
+  56   1      
+  57   1      #if (FUEL_CAPACITY_SCAN_ENABLE)
+  58   1          // adc_config();
+  59   1      #endif
+  60   1      
+  61   1          // instrument_info_init(); // 初始化仪表信息
+  62   1          aip3368h_module_init();
+  63   1      
+  64   1          tmr1_config(); //
+  65   1          tmr2_config(); // 扫描脉冲(电平变化)的定时器
+  66   1      
+  67   1          delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
+  68   1      
+  69   1          // 上电时立即更新一次亮度值，再跑开机动画
+  70   1          // photosensitive_init();
+  71   1      }
+  72          
+  73          void main(void)
+  74          {
+  75   1          // 看门狗默认打开, 复位时间2s
+  76   1          system_init();
+  77   1      
+  78   1          // WDT_KEY = WDT_KEY_VAL(0xDD); //  关闭看门狗
+  79   1      
+  80   1          // 关闭HCK和HDA的调试功能
+  81   1          WDT_KEY = 0x55;  // 解除写保护
+  82   1          IO_MAP &= ~0x01; // 清除这个寄存器的值，实现关闭HCK和HDA引脚的调试功能（解除�
+             -��射）
+  83   1          WDT_KEY = 0xBB;
+  84   1      
+  85   1          /* 用户代码初始化接口 */
+  86   1          user_init();
+  87   1      
+  88   1          ui_manager_init();
+  89   1      
+  90   1      #if 0
+              
+              
+                  // USER_TO_DO
+                  // 上电之后，需要先跑一遍开机动画，再继续主循环
+                  aip3368h_display_boot_animation_handle();
+                  /*
+                     跑完开机动画之后，再初始化ui
+                     初始化ui内部会强制刷新一些显示
+                  */
+                  ui_manager_init();
+              
+                  // TEST ONLY
+              
+                  // aip3368h_display_mileage(123456, 0);
+              
+              #endif
+ 107   1      
+ 108   1          aip3368h_display_test(); // TEST ONLY
+ 109   1      
+ 110   1          /* 系统主循环 */
+ 111   1          while (1)
+ 112   1          {
+ 113   2              // printf("main circle\n");
+ 114   2              // DEBUG_PIN = ~DEBUG_PIN;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 3   
+
+ 115   2      
+ 116   2              WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
+ 117   2      
+ 118   2      #if 0
+              
+              #if PIN_LEVEL_SCAN_ENABLE
+                      pin_level_scan();
+              #endif
+              
+              #if IO_KEY_ENABLE
+                      key_driver_scan(&io_key_para);
+                      io_key_handle(); // io按键处理函数
+              #endif
+              
+              #if SPEED_SCAN_ENABLE
+                      speed_scan(); // 检测时速
+              #endif
+                      mileage_scan(); // 检测大计里程和小计里程
+              
+              #if ENGINE_SPEED_SCAN_ENABLE
+                      engine_speed_scan(); // 检测发动机转速
+              #endif
+              
+              #if FUEL_CAPACITY_SCAN_ENABLE
+                      fuel_capacity_scan(); // 油量检测
+              #endif
+              
+                      photosensitive_scan(); // 光敏检测 -> 调节亮度
+              
+              #endif
+ 145   2      
+ 146   2              ui_display_handle();
+ 147   2          }
+ 148   1      }
+ 149          
+ 150          /**
+ 151           * @}
+ 152           */
+ 153          
+ 154          /*************************** (C) COPYRIGHT 2022 HUGE-IC ***** END OF FILE *****/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     65    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

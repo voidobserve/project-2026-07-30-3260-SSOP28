@@ -1,0 +1,275 @@
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/01/2026 16:55:59 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE AIP3368
+OBJECT MODULE PLACED IN .\Release\Objects\aip3368.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Hardware\aip3368.c LARGE OPTIMIZE(9,SIZE) BROWSE ORDER INTVECTOR(0
+                    -X000C) INCDIR(..\..\Libraries\Include;..\..\User;..\..\User\lib;..\..\Hardware) INTERVAL(3) DEBUG OBJECTEXTEND PRINT(.\R
+                    -elease\Listings\aip3368.lst) OBJECT(.\Release\Objects\aip3368.obj)
+
+line level    source
+
+   1          #include "aip3368.h"
+   2          
+   3          #include "string.h" // memset
+   4          #include "include.h"
+   5          
+   6          #include "user_config.h"
+   7          
+   8          #if 1 // AIP3368H_MODULE
+   9          
+  10          static volatile u16 aip3368h_refresh_cnt = 0;
+  11          
+  12          // 时速面板对应的显存
+  13          volatile u16 aip3368h_speed_panel_display_buff[AIP3368H_SPEED_PANEL_IC_NUM] = {0};
+  14          
+  15          // 发动机转速面板对应的显存
+  16          volatile u16 aip3368h_engine_speed_panel_display_buff[AIP3368H_ENGINE_SPEED_PANEL_IC_NUM] = {0};
+  17          
+  18          // 放在1ms的定时器中
+  19          void aip3368h_refresh_time_add(void)
+  20          {
+  21   1          // 防止计数溢出
+  22   1          if (aip3368h_refresh_cnt < ((u16)-1))
+  23   1          {
+  24   2              aip3368h_refresh_cnt++;
+  25   2          }
+  26   1      }
+  27          
+  28          #if 0
+              /**
+               * @brief 将数据发送给芯片
+               *      由于两组级联的芯片共用时钟线，这里要将两组芯片的数据一起发送
+               *
+               */
+              static void aip3368h_module_send_data_to_one_dev(u16 dat_group_1, u16 dat_group_2)
+              {
+                  volatile u16 i;
+                  // PDM = 1;
+              
+                  for (i = 0; i < 16; i++)
+                  {
+                      DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
+                      DIO_GROUP_2 = dat_group_2 & (u16)0x8000 ? 1 : 0;
+              
+                      aip3368h_delay();
+                      DCK = 1;
+                      aip3368h_delay();
+                      dat_group_1 <<= 1;
+                      dat_group_2 <<= 1;
+                      DCK = 0;
+                      aip3368h_delay();
+                  }
+                  // PDM = 0;
+              }
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/01/2026 16:55:59 PAGE 2   
+
+              #endif
+  55          
+  56          static void aip3368h_module_send_data_to_all_dev(
+  57              const u16 *buff_group_1,
+  58              const u8 len_group_1,
+  59              const u16 *buff_group_2,
+  60              const u8 len_group_2)
+  61          {
+  62   1          volatile u8 i;
+  63   1          volatile u8 j;
+  64   1          volatile u16 dat_group_1;
+  65   1          volatile u16 dat_group_2;
+  66   1      
+  67   1          // 开始
+  68   1          DCK = 0;
+  69   1          LAT = 0;
+  70   1          aip3368h_delay();
+  71   1      
+  72   1          // 一帧完整数据
+  73   1          // for (i = 0; i < max_len; i++)
+  74   1          for (i = 0; i < 10; i++)
+  75   1          {
+  76   2              dat_group_1 = buff_group_1[i];
+  77   2              dat_group_2 = buff_group_2[i];
+  78   2      
+  79   2              for (j = 0; j < 16; j++)
+  80   2              {
+  81   3                  // REVIEW 不确定数据超过芯片级联的长度后，芯片还能不能正常显示
+  82   3                  if (len_group_1 > i)
+  83   3                  {
+  84   4                      /*
+  85   4                          防止访问越界，虽然发送时还是会按照最大的那个数组对应的长�
+             -�
+  86   4                          进行发送，但是显示驱动ic接收时，会截取收到的前一段数据，
+  87   4                          再转发给下一级级联的ic，不会影响显示
+  88   4                      */
+  89   4                      DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
+  90   4                  }
+  91   3      
+  92   3                  if (len_group_2 > i)
+  93   3                  {
+  94   4                      DIO_GROUP_2 = dat_group_2 & (u16)0x8000 ? 1 : 0;
+  95   4                  }
+  96   3      
+  97   3                  aip3368h_delay();
+  98   3                  DCK = 1;
+  99   3                  aip3368h_delay();
+ 100   3      
+ 101   3                  dat_group_1 <<= 1;
+ 102   3                  dat_group_2 <<= 1;
+ 103   3      
+ 104   3                  DCK = 0;
+ 105   3                  aip3368h_delay();
+ 106   3              }
+ 107   2          }
+ 108   1      
+ 109   1          // 结束
+ 110   1          LAT = 1;
+ 111   1          aip3368h_delay();
+ 112   1          LAT = 0;
+ 113   1          // PDM = 0;
+ 114   1          aip3368h_delay();
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/01/2026 16:55:59 PAGE 3   
+
+ 115   1          DIO_GROUP_1 = 0;
+ 116   1          DIO_GROUP_2 = 0;
+ 117   1      }
+ 118          
+ 119          #define AIP3368H_FLASH_TEST_ENABLE 0
+ 120          // 根据显存中的数据，更新显示
+ 121          void aip3368h_module_display(void)
+ 122          {
+ 123   1          // 刷新间隔 单位：ms
+ 124   1          if (aip3368h_refresh_cnt < 25)
+ 125   1          // if (aip3368h_refresh_cnt < 500)
+ 126   1          {
+ 127   2              return;
+ 128   2          }
+ 129   1          else
+ 130   1          {
+ 131   2              aip3368h_refresh_cnt = 0;
+ 132   2          }
+ 133   1      
+ 134   1      #if AIP3368H_FLASH_TEST_ENABLE
+              
+                  // printf("aip3368h_speed_panel_display_buff[0] == 0x%04x\n",
+                  //        aip3368h_speed_panel_display_buff[0]);
+              
+                  // 闪烁测试
+                  if (aip3368h_speed_panel_display_buff[0] == (u16)0x0000)
+                  {
+                      memset(aip3368h_speed_panel_display_buff, 0xFF, sizeof(aip3368h_speed_panel_display_buff));
+                      memset(aip3368h_engine_speed_panel_display_buff, 0xFF, sizeof(aip3368h_engine_speed_panel_display_
+             -buff));
+                  }
+                  else
+                  {
+                      memset(aip3368h_speed_panel_display_buff, 0x00, sizeof(aip3368h_speed_panel_display_buff));
+                      memset(aip3368h_engine_speed_panel_display_buff, 0x00, sizeof(aip3368h_engine_speed_panel_display_
+             -buff));
+                  }
+              
+              #endif
+ 152   1      
+ 153   1          aip3368h_module_send_data_to_all_dev(
+ 154   1              aip3368h_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM,
+ 155   1              aip3368h_engine_speed_panel_display_buff, AIP3368H_ENGINE_SPEED_PANEL_IC_NUM);
+ 156   1      }
+ 157          
+ 158          void aip3368h_module_init(void)
+ 159          {
+ 160   1          // 显示驱动芯片有记忆功能（数据锁存），每次上电应该清空显存
+ 161   1          memset(aip3368h_speed_panel_display_buff, 0x00, sizeof(aip3368h_speed_panel_display_buff));
+ 162   1          memset(aip3368h_engine_speed_panel_display_buff, 0x00, sizeof(aip3368h_engine_speed_panel_display_buff
+             -));
+ 163   1      
+ 164   1          // DCK
+ 165   1          P1_MD0 &= ~GPIO_P11_MODE_SEL(0x03);
+ 166   1          P1_MD0 |= GPIO_P11_MODE_SEL(0x01);
+ 167   1          FOUT_S11 = GPIO_FOUT_AF_FUNC;
+ 168   1          // DIO
+ 169   1          P0_MD0 &= ~GPIO_P03_MODE_SEL(0x03);
+ 170   1          P0_MD0 |= GPIO_P03_MODE_SEL(0x01);
+ 171   1          FOUT_S03 = GPIO_FOUT_AF_FUNC;
+ 172   1      
+ 173   1          P1_MD1 &= ~GPIO_P15_MODE_SEL(0x03);
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/01/2026 16:55:59 PAGE 4   
+
+ 174   1          P1_MD1 |= GPIO_P15_MODE_SEL(0x01);
+ 175   1          FOUT_S15 = GPIO_FOUT_AF_FUNC;
+ 176   1          // LAT
+ 177   1          P1_MD0 &= ~GPIO_P12_MODE_SEL(0x03);
+ 178   1          P1_MD0 |= GPIO_P12_MODE_SEL(0x01);
+ 179   1          FOUT_S12 = GPIO_FOUT_AF_FUNC;
+ 180   1          // PDM
+ 181   1          // PDM 改成 PWM 驱动
+ 182   1          P1_MD1 &= ~GPIO_P16_MODE_SEL(0x03);
+ 183   1          P1_MD1 |= GPIO_P16_MODE_SEL(0x01);
+ 184   1          FOUT_S16 = GPIO_FOUT_STMR0_PWMOUT; // 选择stmr0_pwmout
+ 185   1      
+ 186   1      #define STMR0_PEROID_VAL (SYSCLK / 1 / 1000 - 1) // 周期值=系统时钟/分频/频率 - 1
+ 187   1          // STIMER0配置1kHz PWM
+ 188   1          STMR0_PSC = STMR_PRESCALE_VAL(0x00);                        // 不分频
+ 189   1          STMR0_PRH = STMR_PRD_VAL_H((STMR0_PEROID_VAL >> 8) & 0xFF); // 周期高八位寄存器
+ 190   1          STMR0_PRL = STMR_PRD_VAL_L((STMR0_PEROID_VAL >> 0) & 0xFF); // 周期低八位寄存器
+ 191   1          STMR0_CMPAH = STMR_CMPA_VAL_H(((0) >> 8) & 0xFF);           // 比较值
+ 192   1          STMR0_CMPAL = STMR_CMPA_VAL_L(((0) >> 0) & 0xFF);           // 比较值
+ 193   1      
+ 194   1          STMR_PWMVALA = STMR_0_PWMVALA(0x00); // PWM输出值
+ 195   1          STMR_PWMEN |= STMR_0_PWM_EN(0x1);    // PWM输出使能
+ 196   1          STMR_CNTMD |= STMR_0_CNT_MODE(0x1);  // 选择连续计数模式
+ 197   1          STMR_LOADEN |= STMR_0_LOAD_EN(0x1);  // 自动装载使能
+ 198   1          STMR_CNTCLR |= STMR_0_CNT_CLR(0x1);  // 计数清零
+ 199   1          STMR_CNTEN |= STMR_0_CNT_EN(0x1);    // 计数使能
+ 200   1      
+ 201   1          DIO_GROUP_1 = 0;
+ 202   1          DIO_GROUP_2 = 0;
+ 203   1          DCK = 0;
+ 204   1          LAT = 0;
+ 205   1          // PDM = 0; // 由上电稳定之后设置亮度
+ 206   1          aip3368h_module_send_data_to_all_dev(
+ 207   1              aip3368h_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM,
+ 208   1              aip3368h_engine_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM);
+ 209   1      
+ 210   1          aip3368h_module_set_brightness(100); // TEST ONLY
+ 211   1      }
+ 212          
+ 213          /**
+ 214           * @brief 设置显示的亮度
+ 215           *
+ 216           * @param brightness 亮度值 0 ~ 100
+ 217           *          数值越大，亮度越高
+ 218           *
+ 219           */
+ 220          void aip3368h_module_set_brightness(u8 brightness)
+ 221          {
+ 222   1          // PDM脚是低电平使能，因此占空比越低，亮度越高
+ 223   1          u16 channel_duty = (u32)(100 - brightness) * STMR0_PEROID_VAL / 100;
+ 224   1      
+ 225   1          STMR0_CMPAH = STMR_CMPA_VAL_H(((channel_duty) >> 8) & 0xFF); // 比较值
+ 226   1          STMR0_CMPAL = STMR_CMPA_VAL_L(((channel_duty) >> 0) & 0xFF); // 比较值
+ 227   1          STMR_LOADEN |= STMR_0_LOAD_EN(0x1);                          // 自动装载使能
+ 228   1      }
+ 229          
+ 230          // void aip3368h_module_uninit(void)
+ 231          // {
+ 232          //     aip3368h_module_clear();    // 清屏
+ 233          //     DIO = 0;
+ 234          //     DCK = 0;
+ 235          //     LAT = 0;
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/01/2026 16:55:59 PAGE 5   
+
+ 236          // }
+ 237          
+ 238          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    485    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     30      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

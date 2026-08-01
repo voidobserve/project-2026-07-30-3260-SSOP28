@@ -1,0 +1,1751 @@
+#include "aip3368h_display.h"
+#include "aip3368.h"
+#include "user_config.h"
+
+// ========================================================================
+/**
+ * @brief 7段数码管段码定义 (a,b,c,d,e,f,g)
+ *        对应二进制位: bit0=a, bit1=b, bit2=c, bit3=d, bit4=e, bit5=f, bit6=g
+ */
+static const u8 digit_segment_code[10] = {
+    0x3F, // 0: abcdef
+    0x06, // 1: bc
+    0x5B, // 2: abdeg
+    0x4F, // 3: abcdg
+    0x66, // 4: bcfg
+    0x6D, // 5: acdfg
+    0x7D, // 6: acdefg
+    0x07, // 7: abc
+    0x7F, // 8: abcdefg
+    0x6F  // 9: abcdfg
+};
+
+// ========================================================================
+
+volatile aip3368h_display_obj_t aip3368h_display_obj = {0};
+
+// 记录开机动画的时间：
+// static volatile u16 aip3368h_display_boot_animation_time_cnt = 0;
+// 给开机动画处理函数提供时基：
+// static volatile bit aip3368h_display_boot_animation_time_add_flag = 0;
+// 错误处理函数的调用周期计数值：
+static volatile u16 aip3368h_display_err_handle_time_cnt = 0;
+
+// 背光灯刻度条的映射关系表：
+static const aip3368h_display_mapping_t back_light_scale_bar_map[] = {
+    {10, 5},
+    {10, 2},
+    {9, 2},
+    {9, 4},
+    {9, 7},
+
+    {9, 10}, // 第 5 个灯
+    {9, 9},
+    {8, 2},
+    {8, 4},
+    {8, 7},
+
+    {8, 6}, // 第 10 个灯
+    {8, 9},
+    {8, 10},
+    {8, 12},
+    {8, 13},
+
+    {6, 10}, // 第 15 个灯
+    {6, 9},
+    {6, 13},
+    {6, 15},
+    {0, 5},
+
+    {0, 3}, // 第 20 个灯
+    {0, 2},
+    {1, 13},
+    {1, 12},
+    {1, 3},
+
+    {1, 2}, // 第 25 个灯
+    {1, 1},
+    {2, 4},
+    {2, 7},
+    {2, 6},
+
+    {2, 8}, // 第 30 个灯
+    {2, 9},
+    {2, 10},
+};
+
+// 发动机转速刻度条的映射关系表：
+static const aip3368h_display_mapping_t engine_speed_scale_bar_map[] = {
+    {10, 7},
+    {10, 6},
+    {10, 4},
+    {10, 3},
+    {10, 1},
+
+    {10, 0},
+    {9, 0},
+    {9, 3},
+    {9, 5},
+    {9, 11},
+
+    {9, 8},
+    {8, 1},
+    {8, 3},
+    {8, 5},
+    {8, 8},
+
+    {8, 11},
+    {8, 14},
+    {6, 4},
+    {6, 5},
+    {6, 6},
+
+    {6, 12},
+    {6, 14},
+    {0, 6},
+    {0, 4},
+};
+
+// 发动机转速的数字刻度对应的映射关系：
+static const aip3368h_display_mapping_t engine_speed_digit_scale_map[] = {
+    {5, 9},
+    {7, 6},
+    {7, 7},
+    {7, 8},
+    {9, 1},
+
+    {9, 12},
+    {9, 13},
+    {8, 0},
+    {8, 15},
+    {6, 7},
+
+    {6, 2},
+    {0, 7},
+    {1, 11},
+};
+
+// 挡位数码管的映射关系表：
+static const aip3368h_display_mapping_t gear_digit_map[] = {
+    {2, 2},  // a 段
+    {2, 3},  // b 段
+    {2, 12}, // c 段
+    {2, 14}, // d 段
+    {2, 15}, // e 段
+
+    {2, 0}, // f 段
+    {2, 1}, // g 段
+};
+
+// 时速的 第 0 位 ~ 第 2 位 数码管 ，每位的7个段(a-g)的映射关系
+static const aip3368h_display_mapping_t speed_segment_map[][7] = {
+    // 第0位 ( 最左边。时速的第0位只有b段和c段)
+    {
+        {0, 0},  // 无效数据段
+        {9, 14}, // b 段
+        {9, 15}, // c 段
+        {0, 0},  // 无效数据段
+        {0, 0},  // 无效数据段
+        {0, 0},  // 无效数据段
+        {0, 0}   // 无效数据段
+    },
+
+    // 第1位 数码管
+    {
+        {6, 3},  // a 段
+        {7, 15}, // b 段
+        {7, 12}, // c 段
+        {7, 9},  // d 段
+        {7, 11}, // e 段
+        {7, 14}, // f 段
+        {7, 13}  // g 段
+    },
+
+    // 第2位 数码管
+    {
+        {6, 1}, // a 段
+        {7, 3}, // b 段
+        {7, 4}, // c 段
+        {7, 5}, // d 段
+        {7, 1}, // e 段
+        {7, 0}, // f 段
+        {7, 2}  // g 段
+    },
+};
+
+// 里程6位数码管，每位的7个段(a-g)的映射关系
+static const aip3368h_display_mapping_t mileage_segment_map[6][7] = {
+    // 第0位 ( 最左边 )
+    {
+        {5, 2},  // a段
+        {5, 3},  // b段
+        {5, 14}, // c段
+        {5, 12}, // d段
+        {5, 13}, // e段
+        {5, 4},  // f段
+        {5, 15}  // g段
+    },
+    // 第1位 (   )
+    {
+        {4, 12}, // a段
+        {4, 11}, // b段
+        {5, 5},  // c段
+        {5, 7},  // d段
+        {5, 6},  // e段
+        {5, 1},  // f段
+        {5, 0}   // g段
+    },
+    // 第2位 (   )
+    {
+        {4, 15}, // a段
+        {4, 14}, // b段
+        {4, 6},  // c段
+        {4, 8},  // d段
+        {4, 9},  // e段
+        {4, 13}, // f段
+        {4, 10}  // g段
+    },
+    // 第3位 (   )
+    {
+        {4, 0}, // a段
+        {4, 1}, // b段
+        {4, 4}, // c段
+        {4, 7}, // d段
+        {4, 5}, // e段
+        {4, 2}, // f段
+        {4, 3}  // g段
+    },
+    // 第4位 (   )
+    {
+        {3, 15}, // a段
+        {3, 14}, // b段
+        {3, 12}, // c段
+        {3, 9},  // d段
+        {3, 10}, // e段
+        {3, 13}, // f段
+        {3, 11}  // g段
+    },
+    // 第5位 ( 最右边 )
+    {
+        {3, 0}, // a段
+        {3, 2}, // b段
+        {3, 5}, // c段
+        {3, 7}, // d段
+        {3, 6}, // e段
+        {3, 1}, // f段
+        {3, 3}  // g段
+    }};
+
+// 油量指示灯的映射关系表：
+static const aip3368h_display_mapping_t fuel_level_map[] = {
+    {10, 15}, // 第 0 个灯
+    {10, 14},
+    {10, 12},
+    {10, 11},
+    {10, 10},
+
+    {10, 9},
+};
+
+#if 0
+
+// 显示 左转向 指示灯
+void aip3368h_display_left_turn_light(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[6] |= 0x01 << 8; // 左转向灯（绿）
+    }
+    else
+    {
+        aip3368h_display_buff[6] &= ~(0x01 << 8); // 左转向灯（绿）
+    }
+}
+
+// 显示 右转向 指示灯
+void aip3368h_display_right_turn_light(u8 is_enable)
+{
+    aip3368h_display_buff[1] &= ~(0x01 << 0); // 右转向灯
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[1] |= 0x01 << 0; // 右转向灯
+    }
+}
+
+// 显示 故障 指示灯
+void aip3368h_display_err_light(u8 is_enable)
+{
+    aip3368h_display_buff[6] &= ~(0x01 << 11); // 故障指示灯（红）
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[6] |= 0x01 << 11; // 故障指示灯（红）
+    }
+}
+
+// 显示 小灯（近光灯） 指示灯
+void aip3368h_display_low_beam_indicator_light(u8 is_enable)
+{
+    aip3368h_display_buff[0] &= ~(0x01 << 12); // 小灯（近光灯）
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[0] |= 0x01 << 12; // 小灯（近光灯）
+    }
+}
+
+// 显示 大灯（远光灯） 指示灯
+void aip3368h_display_high_beam_indicator_light(u8 is_enable)
+{
+    aip3368h_display_buff[1] &= ~(0x01 << 14); // 大灯（远光灯）
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[1] |= 0x01 << 14; // 大灯（远光灯）
+    }
+}
+
+/**
+ * @brief 显示 背光刻度条
+ *
+ * @param level 0 ~ 33，0：不显示，1：显示第 0 个灯，33：显示第 32 个灯
+ *
+ * @return * void
+ */
+void aip3368h_display_back_light_scale_bar(u8 level)
+{
+    u8 i = 0;
+    for (i = 0; i < ARRAY_SIZE(back_light_scale_bar_map); i++)
+    {
+        aip3368h_display_buff[back_light_scale_bar_map[i].buff_index] &=
+            ~(0x01 << back_light_scale_bar_map[i].bit_offset);
+    }
+
+    if (level > 0)
+    {
+        for (i = 0; i <= level - 1; i++)
+        {
+            aip3368h_display_buff[back_light_scale_bar_map[i].buff_index] |=
+                (0x01 << back_light_scale_bar_map[i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 显示 发动机转速刻度条
+ *
+ * @param level 0 ~ 24，0：不显示，1：显示第 0 个灯，24：显示第 23 个灯
+ */
+void aip3368h_display_engine_speed_scale_bar(u8 level)
+{
+    // aip3368h_display_buff[10] |= 0x01 << 7;  // 发动机转速刻度条 第 0 个灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 6;  // 发动机转速刻度条 第 1 个灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 4;  // 发动机转速刻度条 第 2 个灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 3;  // 发动机转速刻度条 第 3 个灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 1; // 发动机转速刻度条 第 4 个灯（白）
+
+    // aip3368h_display_buff[10] |= 0x01 << 0; // 发动机转速刻度条 第 5 个灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 0;  // 发动机转速刻度条 第 6 个灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 3;  // 发动机转速刻度条 第 7 个灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 5;  // 发动机转速刻度条 第 8 个灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 11; // 发动机转速刻度条 第 9 个灯（白）
+
+    // aip3368h_display_buff[9] |= 0x01 << 8;  // 发动机转速刻度条 第 10 个灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 1;  // 发动机转速刻度条 第 11 个灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 3;  // 发动机转速刻度条 第 12 个灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 5;  // 发动机转速刻度条 第 13 个灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 8;  // 发动机转速刻度条 第 14 个灯（白）
+
+    // aip3368h_display_buff[8] |= 0x01 << 11; // 发动机转速刻度条 第 15 个灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 14; // 发动机转速刻度条 第 16 个灯（白）
+    // aip3368h_display_buff[6] |= 0x01 << 4;  // 发动机转速刻度条 第 17 个 指示灯（白）
+    // aip3368h_display_buff[6] |= 0x01 << 5;  // 发动机转速刻度条 第 18 个 指示灯（白）
+    // aip3368h_display_buff[6] |= 0x01 << 6;  // 发动机转速刻度条 第 19 个 指示灯（白）
+
+    // aip3368h_display_buff[6] |= 0x01 << 12; // 发动机转速刻度条 第 20 个灯（红）
+    // aip3368h_display_buff[6] |= 0x01 << 14; // 发动机转速刻度条 第 21 个灯（红）
+    // aip3368h_display_buff[0] |= 0x01 << 6;  // 发动机转速刻度条 第 22 个 指示灯（红）
+    // aip3368h_display_buff[0] |= 0x01 << 4;  // 发动机转速刻度条 第 23 个 指示灯（红）
+
+    u8 i;
+    for (i = 0; i < ARRAY_SIZE(engine_speed_scale_bar_map); i++)
+    {
+        aip3368h_display_buff[engine_speed_scale_bar_map[i].buff_index] &=
+            ~(0x01 << engine_speed_scale_bar_map[i].bit_offset);
+    }
+
+    if (level > 0)
+    {
+        for (i = 0; i <= level - 1; i++)
+        {
+            aip3368h_display_buff[engine_speed_scale_bar_map[i].buff_index] |=
+                (0x01 << engine_speed_scale_bar_map[i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 显示 x1000rpm 字样 指示灯
+ *
+ */
+void aip3368h_display_x1000rpm_light(u8 is_enable)
+{
+    aip3368h_display_buff[1] &= ~(0x01 << 5);  // "x1000r/min"字样 第 2 个灯（白）
+    aip3368h_display_buff[1] &= ~(0x01 << 6);  // "x1000r/min"字样 第 1 个灯（白）
+    aip3368h_display_buff[1] &= ~(0x01 << 10); // "x1000r/min"字样 第 0 个灯（白）
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[1] |= 0x01 << 5;  // "x1000r/min"字样 第 2 个灯（白）
+        aip3368h_display_buff[1] |= 0x01 << 6;  // "x1000r/min"字样 第 1 个灯（白）
+        aip3368h_display_buff[1] |= 0x01 << 10; // "x1000r/min"字样 第 0 个灯（白）
+    }
+}
+
+/**
+ * @brief 显示 发动机转速的数字刻度
+ *
+ * @param level 0 ~ 13，0：不显示，1：显示第 0 个灯，13：显示第 12 个灯
+ *
+ */
+void aip3368h_display_engine_speed_digit_scale(u8 level)
+{
+    // aip3368h_display_buff[5] |= 0x01 << 9; // 发动机转速 "0" 字样 指示灯（白）
+    // aip3368h_display_buff[7] |= 0x01 << 6; // 发动机转速 "1" 字样 指示灯（白）
+    // aip3368h_display_buff[7] |= 0x01 << 7; // 发动机转速 "2" 字样 指示灯（白）
+    // aip3368h_display_buff[7] |= 0x01 << 8; // 发动机转速 "3" 字样 指示灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 1; // 发动机转速 "4" 字样 指示灯（白）
+
+    // aip3368h_display_buff[9] |= 0x01 << 12; // 发动机转速 "5" 字样 指示灯（白）
+    // aip3368h_display_buff[9] |= 0x01 << 13; // 发动机转速 "6" 字样 指示灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 0;  // 发动机转速 "7" 字样 指示灯（白）
+    // aip3368h_display_buff[8] |= 0x01 << 15; // 发动机转速 "8" 字样 指示灯（白）
+    // aip3368h_display_buff[6] |= 0x01 << 7;  // 发动机转速 "9" 字样 指示灯（白）
+
+    // aip3368h_display_buff[6] |= 0x01 << 2;  // 发动机转速 "10" 字样 指示灯（红）
+    // aip3368h_display_buff[0] |= 0x01 << 7;  // 发动机转速 "11" 字样 指示灯（红）
+    // aip3368h_display_buff[1] |= 0x01 << 11; // 发动机转速 "12"字样 指示灯（红）
+
+    u8 i;
+    for (i = 0; i < ARRAY_SIZE(engine_speed_digit_scale_map); i++)
+    {
+        aip3368h_display_buff[engine_speed_digit_scale_map[i].buff_index] &=
+            ~(0x01 << engine_speed_digit_scale_map[i].bit_offset);
+    }
+
+    if (level > 0)
+    {
+        for (i = 0; i <= level - 1; i++)
+        {
+            aip3368h_display_buff[engine_speed_digit_scale_map[i].buff_index] |=
+                (0x01 << engine_speed_digit_scale_map[i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 显示 挡位 "GEAR" 字样指示灯（白）
+ *
+ * @attention 在开机动画结束后立即点亮
+ *
+ */
+void aip3368h_display_gear_light(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[2] |= 0x01 << 11; // 挡位 "GEAR" 字样指示灯（白）
+    }
+    else
+    {
+        aip3368h_display_buff[2] &= ~(0x01 << 11); // "GEAR" 字样 第 0 个灯（白）
+    }
+}
+
+/**
+ * @brief 显示 挡位 "N" 字样指示灯
+ *
+ */
+void __aip3368h_display_gear_n_light__(u8 is_enable)
+{
+    aip3368h_display_buff[2] &= ~(0x01 << 5); // 挡位 "N" 字样指示灯（绿）
+
+    if (is_enable)
+    {
+        aip3368h_display_buff[2] |= 0x01 << 5; // 挡位 "N" 字样指示灯（绿）
+    }
+}
+
+/**
+ * @brief 显示 挡位 1 ~ 6
+ *
+ * @param level 0 ~ 6，0：不显示，1：显示数字"1"，2：显示数字"2"
+ */
+void __aip3368h_display_gear_digit__(u8 level)
+{
+    u8 i;
+    u8 segment_code;
+    for (i = 0; i < ARRAY_SIZE(gear_digit_map); i++)
+    {
+        aip3368h_display_buff[gear_digit_map[i].buff_index] &=
+            ~(0x01 << gear_digit_map[i].bit_offset);
+    }
+
+    if (level <= 0)
+    {
+        return;
+    }
+
+    // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+    segment_code = digit_segment_code[level];
+
+    // 遍历 a ~ g 段数码管
+    for (i = 0; i <= 7; i++)
+    {
+        // 检查该段是否需要点亮 (segment_code的对应bit是否为1)
+        if (segment_code & (0x01 << i))
+        {
+            aip3368h_display_buff[gear_digit_map[i].buff_index] |=
+                (0x01 << gear_digit_map[i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 显示 挡位（不能开机动画调用这个函数）
+ *
+ * @param level 0 ~ 9（只使用到0~6，和8）
+ *              0：显示挡位 "N" 字样指示灯，
+ *              1：显示 1 挡
+ *              2: 显示 2 挡
+ *
+ *              GEAR_UNKNOWN：不显示
+ */
+void aip3368h_display_gear(u8 level)
+{
+    // 清空显示
+    __aip3368h_display_gear_n_light__(0);
+    __aip3368h_display_gear_digit__(0);
+
+    if (level == GEAR_UNKNOWN)
+    {
+        return;
+    }
+
+    if (0 == level)
+    {
+        __aip3368h_display_gear_n_light__(1);
+    }
+    else
+    {
+        __aip3368h_display_gear_digit__(level);
+    }
+}
+
+/**
+ * @brief 显示速度数码管上的哪一段
+ *
+ * @param bit_x 0 ~ 2，对应第 0 ~ 2 位数码管
+ *
+ * @param seg 0 ~ 6，对应 a ~ g 段
+ *
+ * @param is_enable 0: 关闭 1: 打开
+ */
+void __aip3368h_display_speed_seg__(u8 bit_x, seg_index_t seg, u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[speed_segment_map[bit_x][seg].buff_index] |=
+            (1 << speed_segment_map[bit_x][seg].bit_offset);
+    }
+    else
+    {
+        aip3368h_display_buff[speed_segment_map[bit_x][seg].buff_index] &=
+            ~(1 << speed_segment_map[bit_x][seg].bit_offset);
+    }
+}
+
+/**
+ * @brief 控制数码管 第 x 位 显示的数字
+ *
+ * @attention 只在 aip3368h_display_speed() 被调用，
+ *              函数内省略了清空显示的操作
+ *
+ * @param bit_x 0 ~ 2，对应第 0 ~ 2 位数码管
+ * @param number 0 ~ 9，需要显示的数字
+ */
+void __aip3368h_display_speed_bit_x__(u8 bit_x, u8 number)
+{
+    u8 i;
+    // u8 seg;
+    // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+    u8 segment_code = digit_segment_code[number];
+
+    // // 清除第 x 位数码管显示
+    // for (i = 0; i < 7; i++)
+    // {
+    //     aip3368h_display_buff[speed_segment_map[bit_x][i].buff_index] &=
+    //         ~(0x01 << speed_segment_map[bit_x][i].bit_offset);
+    // }
+
+    // 根据段码设置对应的buff位
+    for (i = 0; i < 7; i++)
+    {
+        // 检查该段是否需要点亮 (segment_code的对应bit是否为1)
+        if (segment_code & (1 << i))
+        {
+            // 点亮该段
+            aip3368h_display_buff[speed_segment_map[bit_x][i].buff_index] |=
+                (0x01 << speed_segment_map[bit_x][i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 清空数码管 第 x 位 显示的内容
+ *
+ * @param bit_x 0 ~ 2，对应第 0 ~ 2 位数码管
+ *
+ */
+void __aip3368h_display_speed_bit_x_clear__(u8 bit_x)
+{
+    u8 i;
+    for (i = 0; i < 7; i++)
+    {
+        aip3368h_display_buff[speed_segment_map[bit_x][i].buff_index] &=
+            ~(0x01 << speed_segment_map[bit_x][i].bit_offset);
+    }
+}
+
+/**
+ * @brief 显示时速
+ *
+ * @param speed 0 ~ 199
+ *
+ * @attention 时速不显示无效数据位，例如：时速 == 9，则显示 9 km，不会显示 09 km
+ *
+ */
+void aip3368h_display_speed(u8 speed)
+{
+    u8 i;
+    u8 j;
+    // u8 segment_code;
+    // 传参的有效数据位：
+    u8 valid_bits = 0;
+    u8 tmp = 0;
+
+    // 默认先清空时速的显示
+    // 时速 第 0 位：
+    __aip3368h_display_speed_seg__(0, SEG_INDEX_B, 0);
+    __aip3368h_display_speed_seg__(0, SEG_INDEX_C, 0);
+    // 时速 第 1 ~ 2 位：
+    for (i = 1; i < 3; i++)
+    {
+        for (j = 0; j < 7; j++) // 遍历 A ~ G 段
+        {
+            aip3368h_display_buff[speed_segment_map[i][j].buff_index] &=
+                ~(0x01 << speed_segment_map[i][j].bit_offset);
+        }
+    }
+
+    // 判断 speed 的有效数据位
+    tmp = speed;
+    while (1)
+    {
+        valid_bits++; // 刚进入，默认至少有1位有效数据
+        tmp /= 10;
+        if (tmp == 0)
+        {
+            break;
+        }
+    }
+
+    // printf("valid_bits == %u\n", (u16)valid_bits);
+
+    if (speed >= 100)
+    {
+        // 显示时速第 0 位的 1：
+        __aip3368h_display_speed_seg__(0, SEG_INDEX_B, 1);
+        __aip3368h_display_speed_seg__(0, SEG_INDEX_C, 1);
+    }
+
+    for (i = 1; i < 3; i++) // 第 1 ~ 2 位数码管
+    {
+        if (1 == valid_bits && 2 == i)
+        {
+            /*
+                用于显示的数码管只有三位，
+                如果有效数据位只有1位，不显示第0位的"1"字样，
+                也不显示第1位数码管的任何内容
+            */
+            continue;
+        }
+
+        // i 初始值为 1，需要从第 0 位数码管开始准备显示的数据：
+        __aip3368h_display_speed_bit_x__(3 - i, speed % 10);
+        speed /= 10;
+    }
+}
+
+/**
+ * @brief 显示时速的单位对应的指示灯
+ *
+ * @param type
+ *          DISTANCE_UNIT_TYPE_METRIC    km/h
+ *          DISTANCE_UNIT_TYPE_IMPERIAL    mile/h，mph
+ *
+ * @param is_enable 0：不显示，1：显示
+ */
+void __aip3368h_display_speed_unit_type__(distance_unit_type_t type, u8 is_enable)
+{
+    if (type == DISTANCE_UNIT_TYPE_METRIC)
+    {
+        aip3368h_display_buff[5] &= ~(0x01 << 10); // 时速 "km/h" 字样 指示灯（绿）
+        if (is_enable)
+        {
+            aip3368h_display_buff[5] |= 0x01 << 10;
+        }
+    }
+    else
+    {
+        aip3368h_display_buff[5] &= ~(0x01 << 11); // 时速 "mph" 字样 指示灯（绿）
+        if (is_enable)
+        {
+            aip3368h_display_buff[5] |= 0x01 << 11;
+        }
+    }
+}
+
+/**
+ * @brief 显示时速的单位
+ *
+ * @attention 不能在开机动画中调用
+ *
+ * @param type
+ *          DISTANCE_UNIT_TYPE_METRIC    km/h
+ *          DISTANCE_UNIT_TYPE_IMPERIAL    mile/h，mph
+ *        传参为互斥关系，例如:
+ *        传入 DISTANCE_UNIT_TYPE_METRIC ，就会关闭 mph 指示灯，点亮 km/h 指示灯
+ *        传入 DISTANCE_UNIT_TYPE_IMPERIAL ，就会关闭 km/h 指示灯，点亮 mph 指示灯
+ */
+void aip3368h_display_speed_unit_type(distance_unit_type_t type)
+{
+    if (type == DISTANCE_UNIT_TYPE_METRIC)
+    {
+        // 不显示 mph ，显示 km/h
+        __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 0);
+        __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
+    }
+    else
+    {
+        // 不显示 km/h ，显示 mph
+        __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 0);
+        __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
+    }
+}
+
+/**
+ * @brief 显示里程的单位对应的指示灯
+ *
+ * @param type
+ *          DISTANCE_UNIT_TYPE_METRIC      km
+ *          DISTANCE_UNIT_TYPE_IMPERIAL    mile
+ *
+ * @param is_enable 0：不显示，1：显示
+ */
+void __aip3368h_display_mileage_unit_type__(distance_unit_type_t type, u8 is_enable)
+{
+    if (type == DISTANCE_UNIT_TYPE_METRIC)
+    {
+        aip3368h_display_buff[3] &= ~(0x01 << 4); // 里程 "km" 字样指示灯（绿）
+        if (is_enable)
+        {
+            aip3368h_display_buff[3] |= 0x01 << 4; // 里程 "km" 字样指示灯（绿）
+        }
+    }
+    else
+    {
+        aip3368h_display_buff[2] &= ~(0x01 << 13); // 里程 "mile" 字样指示灯（绿）
+        if (is_enable)
+        {
+            aip3368h_display_buff[2] |= 0x01 << 13; // 里程 "mile" 字样指示灯（绿）
+        }
+    }
+}
+
+/**
+ * @brief 显示里程的单位
+ *
+ * @attention 不能在开机动画中调用
+ *
+ * @param type
+ *          DISTANCE_UNIT_TYPE_METRIC    km
+ *          DISTANCE_UNIT_TYPE_IMPERIAL  mile
+ *        传参为互斥关系，例如:
+ *        传入 DISTANCE_UNIT_TYPE_METRIC ，就会关闭 mile 指示灯，点亮 km 指示灯
+ *        传入 DISTANCE_UNIT_TYPE_IMPERIAL ，就会关闭 km 指示灯，点亮 mile 指示灯
+ */
+void aip3368h_display_mileage_unit_type(distance_unit_type_t type)
+{
+    if (type == DISTANCE_UNIT_TYPE_METRIC)
+    {
+        // 不显示 mile ，显示 km
+        __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 0);
+        __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
+    }
+    else
+    {
+        // 不显示 km ，显示 mile
+        __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 0);
+        __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
+    }
+}
+
+/**
+ * @brief 里程显示中，在第 x 位显示数字
+ *
+ * @attention 是 aip3368h_display_mileage() 的子函数
+ *
+ * @param bit_x 0 ~ 5 (0=个位, 5=十万位)
+ * @param number 0 ~ 9
+ */
+void __aip3368h_display_mileage_bit_x__(u8 bit_x, u8 number)
+{
+    u8 i;
+    // u8 j; // 循环计数值
+    // 参数有效性检查（为了节省程序空间，这里可以省略）
+    // if (bit_x > 5 || number > 9)
+    // {
+    //     return;
+    // }
+
+    // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+    u8 segment_code = digit_segment_code[number];
+
+    // 清除 bit_x 对应数码管 a ~ g 段的显示
+    for (i = 0; i < 7; i++) //
+    {
+        aip3368h_display_buff[mileage_segment_map[bit_x][i].buff_index] &=
+            ~(0x01 << mileage_segment_map[bit_x][i].bit_offset);
+
+        // 检查该段是否需要点亮 (segment_code的对应bit是否为1)
+        if (segment_code & (1 << i))
+        {
+            // 点亮该段
+            aip3368h_display_buff[mileage_segment_map[bit_x][i].buff_index] |=
+                (0x01 << mileage_segment_map[bit_x][i].bit_offset);
+        }
+    }
+}
+
+/**
+ * @brief 里程的 "TOTAL" 字样指示灯
+ *
+ * @param is_enable 是否显示，0：不显示，1：显示
+ *
+ */
+void __aip3368h_display_mileage_total_light__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[1] |= (0x01 << 9); // 里程 "TOTAL" 字样 指示灯（绿）
+    }
+    else
+    {
+        aip3368h_display_buff[1] &= ~(0x01 << 9); // 里程 "TOTAL" 字样 指示灯（绿）
+    }
+}
+
+/**
+ * @brief 里程的 "TRIP" 字样指示灯
+ *
+ * @param is_enable 是否显示，0：不显示，1：显示
+ *
+ */
+void __aip3368h_display_mileage_trip_light__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[1] |= (0x01 << 8); // 里程 "TRIP" 字样 指示灯（绿）
+    }
+    else
+    {
+        aip3368h_display_buff[1] &= ~(0x01 << 8); // 里程 "TRIP" 字样 指示灯（绿）
+    }
+}
+
+/**
+ * @brief 里程的小数点
+ *
+ */
+void __aip3368h_display_mileage_point__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[3] |= 0x01 << 8; // 里程 小数点 指示灯（白）
+    }
+    else
+    {
+        aip3368h_display_buff[3] &= ~(0x01 << 8); // 里程 小数点 指示灯（白）
+    }
+}
+
+/**
+ * @brief 显示里程
+ *
+ * @param mileage
+ *          如果显示总里程，mileage == 12345，则显示 12345
+ *          如果显示当前里程，mileage == 12345，则显示 1234.5
+ *
+ * @param is_displaying_total_mileage 是否显示总里程。0：显示当前里程(TRIP)，1：显示总里程(ODO)
+ */
+void aip3368h_display_mileage(u32 mileage, u8 is_displaying_total_mileage)
+{
+    u8 i; // 循环计数值
+    // 显示里程的数值，不包括单位、小数点：
+    for (i = 0; i < 6; i++)
+    {
+        __aip3368h_display_mileage_bit_x__(5 - i, mileage % 10);
+        mileage /= 10;
+    }
+
+    if (is_displaying_total_mileage)
+    {
+        __aip3368h_display_mileage_total_light__(1);
+        __aip3368h_display_mileage_trip_light__(0);
+        __aip3368h_display_mileage_point__(0);
+    }
+    else
+    {
+        __aip3368h_display_mileage_total_light__(0);
+        __aip3368h_display_mileage_trip_light__(1);
+        __aip3368h_display_mileage_point__(1);
+    }
+}
+
+/**
+ * @brief 油量图标
+ *
+ * @param is_enable 0:不显示 1:显示
+ *
+ */
+void __aip3368h_display_fuel_icon__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[10] |= 0x01 << 13; // 油量 图标 （红）
+    }
+    else
+    {
+        aip3368h_display_buff[10] &= ~(0x01 << 13); // 油量 图标 （红）
+    }
+}
+
+/**
+ * @brief 油量"E"字样 指示灯
+ *
+ */
+void __aip3368h_display_fuel_empty_light__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[9] |= 0x01 << 6; // 油量 "E" 字样 指示灯（红）
+    }
+    else
+    {
+        aip3368h_display_buff[9] &= ~(0x01 << 6); // 油量 "E" 字样 指示灯（红）
+    }
+}
+
+/**
+ * @brief 油量"F"字样 指示灯
+ *
+ */
+void __aip3368h_display_fuel_full_light__(u8 is_enable)
+{
+    if (is_enable)
+    {
+        aip3368h_display_buff[10] |= 0x01 << 8; // 油量 "F" 字样 指示灯（白）
+    }
+    else
+    {
+        aip3368h_display_buff[10] &= ~(0x01 << 8); // 油量 "F" 字样 指示灯（白）
+    }
+}
+
+/**
+ * @brief 显示油量格数
+ *
+ * @param level 油量格数 0 ~ 6，0：0格油量，1：1格油量，2：2格油量
+ *
+ */
+void aip3368h_display_fuel_level(aip3368h_display_fuel_level_t level)
+{
+    u8 i;
+    // 清空显示
+    for (i = 0; i < ARRAY_SIZE(fuel_level_map); i++)
+    {
+        aip3368h_display_buff[fuel_level_map[i].buff_index] &=
+            ~(0x01 << fuel_level_map[i].bit_offset);
+    }
+
+    if (level == 0)
+    {
+        return;
+    }
+
+    // 根据 传参 进行显示：
+    for (i = 0; i <= level - 1; i++)
+    {
+        aip3368h_display_buff[fuel_level_map[i].buff_index] |=
+            (0x01 << fuel_level_map[i].bit_offset);
+    }
+
+    // aip3368h_display_buff[10] |= 0x01 << 9;  // 油量 第 5 格 指示灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 10; // 油量 第 4 格 指示灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 11; // 油量 第 3 格 指示灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 12; // 油量 第 2 格 指示灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 14; // 油量 第 1 格 指示灯（白）
+    // aip3368h_display_buff[10] |= 0x01 << 15; // 油量 第 0 格 指示灯（红）
+}
+
+void aip3368h_display_boot_animation_time_add(void)
+{
+    if (aip3368h_display_obj.is_in_boot_animation == 1)
+    {
+        // 在开机动画中，累加开机动画的时间
+        aip3368h_display_obj.boot_animation_time_cnt++;
+        aip3368h_display_obj.boot_animation_time_add_flag = 1;
+    }
+}
+
+// 时速的开机动画
+void __aip3368h_display_boot_animation_in_speed__(void)
+{
+    // 测试完成之后，需要将下面两个 u16 改成 u8 来节省程序空间
+    static const u8 period = 50;
+    static u8 step = 0;
+
+    static seg_index_t cur_seg = 0;  // 当前显示的数码管
+    static seg_index_t last_seg = 0; // 上一次显示的数码管
+    static u8 is_initialized = 0;
+
+    if (BOOT_ANIMATION_PHASE_SPEED !=
+        aip3368h_display_obj.boot_animation_phase)
+    {
+        return;
+    }
+
+    /*
+        动画循环 3次 * 每次6个数码管 * 每次切换显示数码管的时间间隔
+        样机实际在第三次的C段数码管显示完之后就熄灭，切换到下一个动画阶段了，
+        这里要加上微调
+    */
+    if (aip3368h_display_obj.boot_animation_time_cnt >=
+        ((u16)3 * 6 * period - (period * 2)))
+    {
+        aip3368h_display_obj.boot_animation_phase =
+            BOOT_ANIMATION_PHASE_BACKLIGHT;
+        return;
+    }
+    else if (aip3368h_display_obj.boot_animation_time_cnt >=
+             ((u16)3 * 6 * period - (period * 3)))
+    {
+        __aip3368h_display_speed_seg__(1, last_seg, 0);
+        __aip3368h_display_speed_seg__(2, last_seg, 0);
+        return;
+    }
+
+    if (is_initialized == 0)
+    {
+        is_initialized = 1;
+        step = period;
+    }
+
+    step++;
+    if (step >= period)
+    {
+        step = 0;
+    }
+    else
+    {
+        return;
+    }
+
+    __aip3368h_display_speed_seg__(1, last_seg, 0);
+    __aip3368h_display_speed_seg__(2, last_seg, 0);
+    __aip3368h_display_speed_seg__(1, cur_seg, 1);
+    __aip3368h_display_speed_seg__(2, cur_seg, 1);
+    last_seg = cur_seg;
+    cur_seg++;
+    if (cur_seg == SEG_INDEX_G)
+    {
+        cur_seg = SEG_INDEX_A;
+    }
+}
+
+// 背光刻度条的开机动画
+void __aip3368h_display_boot_animation_in_back_light_scale_bar__(void)
+{
+    // 测试完成之后，需要将下面两个 u16 改成 u8 来节省程序空间
+    static const u8 period = 30;
+    static u8 step = 0;
+
+    static u16 period_cnt = 0;
+    static u8 is_initialized = 0;
+
+    static u8 level = 0;
+
+    if (BOOT_ANIMATION_PHASE_BACKLIGHT !=
+        aip3368h_display_obj.boot_animation_phase)
+    {
+        return;
+    }
+
+    // 0 ~ 32
+    if (period_cnt >= (u16)34 * period)
+    {
+        aip3368h_display_obj.boot_animation_phase =
+            BOOT_ANIMATION_PHASE_LEFT_TO_RIGHT;
+
+        // USER_TO_DO 可能要在这里加上提前返回的逻辑
+    }
+
+    if (0 == is_initialized)
+    {
+        // 刚进入动画，需要立即点亮第一个灯
+        is_initialized = 1;
+        step = period_cnt;
+    }
+
+    step++;
+    period_cnt++;
+    if (step >= period)
+    {
+        step = 0;
+    }
+    else
+    {
+        return;
+    }
+
+    aip3368h_display_back_light_scale_bar(level);
+    level++;
+}
+
+// 开机动画，从左到右点亮各个指示灯
+void __aip3368h_display_boot_animation_left_to_right__(void)
+{
+    // =========================================================
+    // 油量
+    static const u16 period_of_fuel = 30;
+    static u16 step_of_fuel = 0;
+    static u8 level_of_fuel = 0;
+    // =========================================================
+    // 仪表顶部的各个指示灯
+    static const u16 period_of_indicator_light = 200;
+    static u16 step_of_indicator_light = 0;
+    static u8 level_of_indicator_light = 0;
+    // =========================================================
+    // 发动机转速刻度条
+    static const u16 period_of_engine_speed_scale_bar = 30;
+    static u16 step_of_engine_speed_scale_bar = 0;
+    static u8 level_of_engine_speed_scale_bar = 0;
+    // =========================================================
+    // 时速、里程、挡位，以及其他杂项
+    static const u16 period_of_misc = 90;
+    static u16 step_of_misc = 0;
+    static u8 level_of_misc = 0;
+    // =========================================================
+
+    // static u16 period_cnt = 0;
+    static u8 is_initialized = 0;
+
+    // static u8 level = 0;
+
+    if (BOOT_ANIMATION_PHASE_LEFT_TO_RIGHT !=
+        aip3368h_display_obj.boot_animation_phase)
+    {
+        return;
+    }
+
+    if (level_of_misc >= 12)
+    {
+        // 开机动画结束
+        aip3368h_display_obj.boot_animation_phase =
+            BOOT_ANIMATION_PHASE_HOLD_ON;
+        return;
+    }
+
+    if (is_initialized == 0)
+    {
+        is_initialized = 1;
+
+        // 油量
+        step_of_fuel = period_of_fuel;
+        __aip3368h_display_fuel_empty_light__(1);
+
+        // 仪表顶部的各个指示灯
+        step_of_indicator_light = period_of_indicator_light;
+
+        aip3368h_display_engine_speed_digit_scale(1);
+    }
+
+    // =========================================================
+    // 油量
+    step_of_fuel++;
+    if (step_of_fuel >= period_of_fuel &&
+        level_of_fuel <= AIP3368H_DISPLAY_FUEL_LEVEL_5)
+    {
+        step_of_fuel = 0;
+
+        aip3368h_display_fuel_level(level_of_fuel);
+        if (level_of_fuel == AIP3368H_DISPLAY_FUEL_LEVEL_2)
+        {
+            __aip3368h_display_fuel_icon__(1);
+        }
+
+        if (level_of_fuel == AIP3368H_DISPLAY_FUEL_LEVEL_5)
+        {
+            __aip3368h_display_fuel_full_light__(1);
+        }
+
+        level_of_fuel++;
+    }
+    // =========================================================
+    // 仪表顶部的各个指示灯
+    step_of_indicator_light++;
+    if (step_of_indicator_light >= period_of_indicator_light &&
+        level_of_indicator_light <= 4)
+    {
+        step_of_indicator_light = 0;
+
+        switch (level_of_indicator_light)
+        {
+        case 0:
+            aip3368h_display_left_turn_light(1);
+            break;
+        case 1:
+            aip3368h_display_err_light(1);
+            break;
+        case 2:
+            aip3368h_display_low_beam_indicator_light(1);
+            break;
+        case 3:
+            aip3368h_display_high_beam_indicator_light(1);
+            break;
+        case 4:
+            aip3368h_display_right_turn_light(1);
+            break;
+        }
+
+        level_of_indicator_light++;
+    }
+    // =========================================================
+    // 发动机转速刻度条
+    step_of_engine_speed_scale_bar++;
+    if (step_of_engine_speed_scale_bar >= period_of_engine_speed_scale_bar &&
+        level_of_engine_speed_scale_bar <= 24)
+    {
+        step_of_engine_speed_scale_bar = 0;
+        aip3368h_display_engine_speed_scale_bar(level_of_engine_speed_scale_bar);
+        // USER_TO_DO 可以优化一下这里：
+        switch (level_of_engine_speed_scale_bar)
+        {
+        case 2:
+            aip3368h_display_engine_speed_digit_scale(2);
+            break;
+        case 4:
+            aip3368h_display_engine_speed_digit_scale(3);
+            break;
+        case 6:
+            aip3368h_display_engine_speed_digit_scale(4);
+            break;
+        case 8:
+            aip3368h_display_engine_speed_digit_scale(5);
+            break;
+        case 10:
+            aip3368h_display_engine_speed_digit_scale(6);
+            break;
+        case 12:
+            aip3368h_display_engine_speed_digit_scale(7);
+            break;
+        case 14:
+            aip3368h_display_engine_speed_digit_scale(8);
+            break;
+        case 16:
+            aip3368h_display_engine_speed_digit_scale(9);
+            break;
+        case 18:
+            aip3368h_display_engine_speed_digit_scale(10);
+            break;
+        case 20:
+            aip3368h_display_engine_speed_digit_scale(11);
+            break;
+        case 22:
+            aip3368h_display_engine_speed_digit_scale(12);
+            break;
+        case 24:
+            aip3368h_display_engine_speed_digit_scale(13);
+            break;
+        }
+
+        level_of_engine_speed_scale_bar++;
+    }
+    // =========================================================
+    step_of_misc++;
+    if (step_of_misc >= period_of_misc &&
+        level_of_misc <= 11)
+    {
+        step_of_misc = 0;
+        switch (level_of_misc)
+        {
+        case 0:
+            __aip3368h_display_speed_bit_x__(0, 1);
+            break;
+        case 1:
+            __aip3368h_display_speed_bit_x__(1, 8);
+            break;
+        case 2:
+            __aip3368h_display_speed_bit_x__(2, 8);
+            break;
+        case 3:
+            __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
+            __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
+            __aip3368h_display_gear_n_light__(1);
+            break;
+        case 4:
+            __aip3368h_display_mileage_bit_x__(0, 8);
+            __aip3368h_display_mileage_total_light__(1);
+            break;
+        case 5:
+            __aip3368h_display_mileage_bit_x__(1, 8);
+            break;
+        case 6:
+            __aip3368h_display_mileage_bit_x__(2, 8);
+            __aip3368h_display_mileage_trip_light__(1);
+            aip3368h_display_x1000rpm_light(1);
+            break;
+        case 7:
+            __aip3368h_display_mileage_bit_x__(3, 8);
+            break;
+        case 8:
+            __aip3368h_display_mileage_bit_x__(4, 8);
+            __aip3368h_display_mileage_point__(1);
+            break;
+        case 9:
+            __aip3368h_display_mileage_bit_x__(5, 8);
+            break;
+        case 10:
+            __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
+            __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
+            break;
+        case 11:
+            __aip3368h_display_gear_digit__(8);
+            aip3368h_display_gear_light(1);
+            break;
+        }
+
+        level_of_misc++;
+    }
+}
+
+// 开机动画处理函数
+void aip3368h_display_boot_animation_handle(void)
+{
+    memset(&aip3368h_display_obj, 0x00, sizeof(aip3368h_display_obj_t));
+    aip3368h_display_obj.is_in_boot_animation = 1;
+
+    while (aip3368h_display_obj.is_in_boot_animation)
+    {
+        WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
+
+        if (aip3368h_display_obj.boot_animation_time_add_flag)
+        {
+            aip3368h_display_obj.boot_animation_time_add_flag = 0;
+        }
+        else
+        {
+            continue;
+        }
+
+        __aip3368h_display_boot_animation_in_speed__();
+        __aip3368h_display_boot_animation_in_back_light_scale_bar__();
+        __aip3368h_display_boot_animation_left_to_right__();
+
+        if (BOOT_ANIMATION_PHASE_HOLD_ON ==
+            aip3368h_display_obj.boot_animation_phase)
+        {
+            static u16 hold_on_cnt = 0;
+            hold_on_cnt++;
+            if (hold_on_cnt >= 500)
+            {
+                hold_on_cnt = 0;
+                aip3368h_display_obj.boot_animation_phase = BOOT_ANIMATION_PAHSE_END;
+            }
+        }
+
+        if (BOOT_ANIMATION_PAHSE_END ==
+            aip3368h_display_obj.boot_animation_phase)
+        {
+            // 开机动画结束，让部分灯光保持常亮
+            aip3368h_display_obj.is_in_boot_animation = 0;
+            aip3368h_display_back_light_scale_bar(33);
+            aip3368h_display_engine_speed_digit_scale(13);
+            aip3368h_display_x1000rpm_light(1);
+            __aip3368h_display_fuel_empty_light__(1);
+            __aip3368h_display_fuel_full_light__(1);
+            aip3368h_display_gear_light(1);
+
+            // USER_TO_DO 根据记忆，选择对应的单位和TOTAL/TRIP里程进行显示
+            aip3368h_display_speed_unit_type(
+                instrument.save_info.distance_unit_type);
+            aip3368h_display_mileage_unit_type(
+                instrument.save_info.distance_unit_type);
+        }
+
+        aip3368h_module_display();
+    }
+}
+
+void aip3368h_display_err_handle_time_add(void)
+{
+    if (aip3368h_display_err_handle_time_cnt < ((u16)-1))
+    {
+        aip3368h_display_err_handle_time_cnt++;
+    }
+}
+void aip3368h_display_err_handle(void)
+{
+    if (aip3368h_display_err_handle_time_cnt < 475)
+    {
+        return;
+    }
+    else
+    {
+        aip3368h_display_err_handle_time_cnt = 0;
+    }
+
+    // 低油量 报警
+    if (instrument.flag_is_in_warning_of_low_fuel)
+    {
+        // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
+        // 让第 0 格油量的指示灯和油量图标指示灯一起闪烁
+
+        if ((aip3368h_display_buff[10] >> 13) & 0x01)
+        {
+            aip3368h_display_buff[10] &= ~(0x01 << 13); // 油量 图标 （红）
+            aip3368h_display_buff[10] &= ~(0x01 << 15); // 油量 第 0 格 指示灯（红）
+        }
+        else
+        {
+            aip3368h_display_buff[10] |= 0x01 << 13; // 油量 图标 （红）
+            aip3368h_display_buff[10] |= 0x01 << 15; // 油量 第 0 格 指示灯（红）
+        }
+    }
+}
+#endif
+
+// ==============================================================================
+// ==============================================================================
+#if AIP3368H_DISPLAY_TEST_ENABLE
+
+/**
+ * @brief 测试指示灯闪烁，放在1ms的中断内调用
+ *
+ * @return * void
+ */
+void aip3368h_display_test_light_blink_1ms_isr(void)
+{
+    static u16 cnt = 0;
+    static u8 is_enable = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    // aip3368h_display_left_turn_light(is_enable);
+    // aip3368h_display_right_turn_light(is_enable);
+    // aip3368h_display_err_light(is_enable);
+    // aip3368h_display_low_beam_indicator_light(is_enable);
+    // aip3368h_display_high_beam_indicator_light(is_enable);
+    // aip3368h_display_x1000rpm_light(is_enable);
+    // aip3368h_display_gear_light(is_enable);
+    // aip3368h_display_gear_n_light(is_enable);
+    // __aip3368h_display_fuel_icon__(is_enable);
+    // __aip3368h_display_fuel_empty_light__(is_enable);
+    // __aip3368h_display_fuel_full_light__(is_enable);
+
+    // // 每次时间到来，换一种速度单位来显示：
+    // if (is_enable)
+    // {
+    //     aip3368h_display_speed_unit_type(DISTANCE_UNIT_TYPE_METRIC);
+    // }
+    // else
+    // {
+    //     aip3368h_display_speed_unit_type(DISTANCE_UNIT_TYPE_IMPERIAL);
+    // }
+
+    // if (is_enable)
+    // {
+    //     aip3368h_display_mileage_unit_type(DISTANCE_UNIT_TYPE_METRIC);
+    // }
+    // else
+    // {
+    //     aip3368h_display_mileage_unit_type(DISTANCE_UNIT_TYPE_IMPERIAL);
+    // }
+
+    is_enable = !is_enable;
+}
+
+/**
+ * @brief 测试背光灯刻度条
+ *
+ */
+void aip3368h_display_test_back_light_scale_bar(void)
+{
+    static u16 cnt = 0;
+    static u8 level = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    aip3368h_display_back_light_scale_bar(level);
+
+    level++;
+    if (level >= 34)
+    {
+        level = 0;
+    }
+}
+
+/**
+ * @brief 测试 发动机转速刻度条
+ *
+ */
+void aip3368h_display_test_engine_speed_scale_bar(void)
+{
+    static u16 cnt = 0;
+    static u8 level = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    aip3368h_display_engine_speed_scale_bar(level);
+    level++;
+    if (level >= 25)
+    {
+        level = 0;
+    }
+}
+
+/**
+ * @brief 测试 发动机转速的数字刻度
+ *
+ */
+void aip3368h_display_test_engine_speed_digit_scale(void)
+{
+    static u16 cnt = 0;
+    static u8 level = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    aip3368h_display_engine_speed_digit_scale(level);
+    level++;
+    if (level >= 14)
+    {
+        level = 0;
+    }
+}
+
+// 测试 挡位 显示
+void aip3368h_display_test_gear(void)
+{
+    static u16 cnt = 0;
+    static u8 level = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    if (level == 0)
+    {
+        __aip3368h_display_gear_n_light__(0);
+        __aip3368h_display_gear_digit__(0);
+    }
+    else
+    {
+        // 最大传入 6
+        aip3368h_display_gear(level - 1);
+    }
+
+    level++;
+    if (level >= 8)
+    {
+        level = 0;
+    }
+}
+
+void aip3368h_display_test_speed(void)
+{
+    static u16 cnt = 0;
+    static u8 speed = 0;
+
+    cnt++;
+    if (cnt < 200)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    aip3368h_display_speed(speed);
+    speed++;
+    if (speed >= 200)
+    {
+        speed = 0;
+    }
+}
+
+void aip3368h_display_test_mileage(void)
+{
+    static u16 cnt = 0;
+    static u8 index = 0;
+    static u8 is_displaying_total_mileage = 0;
+    const u32 buff[] = {
+        111111,
+        222222,
+        333333,
+        444444,
+        555555,
+        666666,
+        777777,
+        888888,
+        999999,
+    };
+
+    cnt++;
+    if (cnt < 200)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    aip3368h_display_mileage(buff[index], is_displaying_total_mileage);
+    is_displaying_total_mileage = !is_displaying_total_mileage;
+    index++;
+    if (index >= ARRAY_SIZE(buff))
+    {
+        index = 0;
+    }
+}
+
+void aip3368h_display_test_fuel(void)
+{
+    static u16 cnt = 0;
+    static aip3368h_display_fuel_level_t fuel_level =
+        AIP3368H_DISPLAY_FUEL_LEVEL_EMPTY;
+    static u8 is_enable = 0;
+
+    cnt++;
+    if (cnt < 500)
+    {
+        return;
+    }
+    else
+    {
+        cnt = 0;
+    }
+
+    __aip3368h_display_fuel_icon__(is_enable);
+    __aip3368h_display_fuel_empty_light__(is_enable);
+    __aip3368h_display_fuel_full_light__(is_enable);
+    aip3368h_display_fuel_level(fuel_level);
+
+    fuel_level++;
+    if (fuel_level > AIP3368H_DISPLAY_FUEL_LEVEL_5)
+    {
+        fuel_level = AIP3368H_DISPLAY_FUEL_LEVEL_EMPTY;
+    }
+
+    is_enable = !is_enable;
+}
+
+#endif
+
+void aip3368h_display_test(void)
+{
+#if 1
+    aip3368h_speed_panel_display_buff[0] = 0xFFFF;
+    // aip3368h_speed_panel_display_buff[0] |= 0x01 << 0;
+    // aip3368h_speed_panel_display_buff[0] |= 0x01 << 1;
+
+
+#endif
+
+// 所有灯整体闪烁
+#if 0
+    static u8 dir = 0;
+    static u16 cnt = 0;
+    cnt++;
+
+    if (cnt >= 500)
+    {
+        cnt = 0;
+    }
+    else
+    {
+        return;
+    }
+
+    if (dir == 0)
+    {
+        memset(aip3368h_display_buff, 0x00, sizeof(aip3368h_display_buff));
+        dir = 1;
+    }
+    else
+    {
+        memset(aip3368h_display_buff, (u8)0xFF, sizeof(aip3368h_display_buff));
+        dir = 0;
+    }
+#endif
+}
