@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   TMR1                                                              08/01/2026 16:50:41 PAGE 1   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR1
@@ -11,62 +11,64 @@ line level    source
 
    1          #include "tmr1.h"
    2          
-   3          // 定时器定时周期 (单位:Hz)
-   4          // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
-   5          #define TMR1_PERIOD (SYSCLK / 128 / 1000 - 1) // 1000Hz,1ms
-   6          
-   7          /**
-   8           * @brief 配置定时器TMR1，配置完成后，定时器默认关闭
-   9           */
-  10          void tmr1_config(void)
-  11          {
-  12   1          __SetIRQnIP(TMR1_IRQn, TMR1_IQn_CFG); // 设置中断优先级（TMR1）
-  13   1          __DisableIRQ(TMR1_IRQn);              // 禁用中断
-  14   1          IE_EA = 1;                            // 打开总中断
-  15   1      
-  16   1          TMR_ALLCON = TMR1_CNT_CLR(0x1); // 清除计数值
-  17   1      
-  18   1          // USER_TO_DO 待优化
-  19   1          TMR1_CONL &= ~TMR_PRESCALE_SEL(0x07); // 清除TMR1的预分频配置寄存器
-  20   1          TMR1_CONL |= TMR_PRESCALE_SEL(0x07);  // 定时器预分频
-  21   1          TMR1_CONL &= ~TMR_MODE_SEL(0x03);     // 清除TMR1的模式配置寄存器
-  22   1          TMR1_CONL |= TMR_MODE_SEL(0x01);      // 配置TMR1的模式为计数器模式，最后对系统时钟
-             -的脉冲进行计数
-  23   1      
-  24   1          TMR1_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR1的计数标志位，表示未完成计数
-  25   1          TMR1_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR1的计数中断
+   3          #include "aip3368h_display.h"
+   4          #include "ui.h"
+   5          
+   6          // 定时器定时周期 (单位:Hz)
+   7          // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
+   8          #define TMR1_PERIOD (SYSCLK / 128 / 1000 - 1) // 1000Hz,1ms
+   9          
+  10          /**
+  11           * @brief 配置定时器TMR1，配置完成后，定时器默认关闭
+  12           */
+  13          void tmr1_config(void)
+  14          {
+  15   1          __SetIRQnIP(TMR1_IRQn, TMR1_IQn_CFG); // 设置中断优先级（TMR1）
+  16   1          __DisableIRQ(TMR1_IRQn);              // 禁用中断
+  17   1          IE_EA = 1;                            // 打开总中断
+  18   1      
+  19   1          TMR_ALLCON = TMR1_CNT_CLR(0x1); // 清除计数值
+  20   1      
+  21   1          // USER_TO_DO 待优化
+  22   1          TMR1_CONL &= ~TMR_PRESCALE_SEL(0x07); // 清除TMR1的预分频配置寄存器
+  23   1          TMR1_CONL |= TMR_PRESCALE_SEL(0x07);  // 定时器预分频
+  24   1          TMR1_CONL &= ~TMR_MODE_SEL(0x03);     // 清除TMR1的模式配置寄存器
+  25   1          TMR1_CONL |= TMR_MODE_SEL(0x01); // 配置TMR1的模式为计数器模式，最后对系统时钟的�
+             -�冲进行计数
   26   1      
-  27   1          // 配置TMR1的计数周期
-  28   1          TMR1_PRH = TMR_PERIOD_VAL_H((TMR1_PERIOD >> 8) & 0xFF); // 周期值
-  29   1          TMR1_PRL = TMR_PERIOD_VAL_L((TMR1_PERIOD >> 0) & 0xFF);
-  30   1      
-  31   1          // TMR1_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除TMR1的时钟源配置寄存器
-  32   1          // TMR1_CONL |= TMR_SOURCE_SEL(0x05);    // 配置TMR1的时钟源，不用任何时钟
+  27   1          TMR1_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR1的计数标志位，表示未完成计数
+  28   1          TMR1_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR1的计数中断
+  29   1      
+  30   1          // 配置TMR1的计数周期
+  31   1          TMR1_PRH = TMR_PERIOD_VAL_H((TMR1_PERIOD >> 8) & 0xFF); // 周期值
+  32   1          TMR1_PRL = TMR_PERIOD_VAL_L((TMR1_PERIOD >> 0) & 0xFF);
   33   1      
-  34   1          // 重新给TMR1配置时钟
-  35   1          TMR1_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除定时器的时钟源配置寄存器
-  36   1          TMR1_CONL |= TMR_SOURCE_SEL(0x06);    // 配置定时器的时钟源，使用系统时钟
-  37   1      
-  38   1          __EnableIRQ(TMR1_IRQn); // 使能中断
-  39   1          // IE_EA = 1;              // 打开总中断
-  40   1      }
-  41          
-  42          // TMR1中断服务函数
-  43          void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
-  44          {
-  45   1          // 进入中断设置IP，不可删除
-  46   1          __IRQnIPnPush(TMR1_IRQn);
-  47   1      
-  48   1          // ---------------- 用户函数处理 -------------------
-  49   1      
-  50   1          // 周期中断
-  51   1          if (TMR1_CONH & TMR_PRD_PND(0x1))
-  52   1          {
-C51 COMPILER V9.60.7.0   TMR1                                                              08/01/2026 16:50:41 PAGE 2   
+  34   1          // TMR1_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除TMR1的时钟源配置寄存器
+  35   1          // TMR1_CONL |= TMR_SOURCE_SEL(0x05);    // 配置TMR1的时钟源，不用任何时钟
+  36   1      
+  37   1          // 重新给TMR1配置时钟
+  38   1          TMR1_CONL &= ~(TMR_SOURCE_SEL(0x07)); // 清除定时器的时钟源配置寄存器
+  39   1          TMR1_CONL |= TMR_SOURCE_SEL(0x06);    // 配置定时器的时钟源，使用系统时钟
+  40   1      
+  41   1          __EnableIRQ(TMR1_IRQn); // 使能中断
+  42   1          // IE_EA = 1;              // 打开总中断
+  43   1      }
+  44          
+  45          // TMR1中断服务函数
+  46          void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
+  47          {
+  48   1          // 进入中断设置IP，不可删除
+  49   1          __IRQnIPnPush(TMR1_IRQn);
+  50   1      
+  51   1          // ---------------- 用户函数处理 -------------------
+  52   1      
+C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 2   
 
-  53   2              TMR1_CONH |= TMR_PRD_PND(0x1); // 清除pending
-  54   2      
-  55   2      #if 0
+  53   1          // 周期中断
+  54   1          if (TMR1_CONH & TMR_PRD_PND(0x1)) {
+  55   2              TMR1_CONH |= TMR_PRD_PND(0x1); // 清除pending
+  56   2      
+  57   2      #if 0
               
                       if (mileage_save_time_cnt < 65535)
                       {
@@ -99,51 +101,59 @@ line level    source
                       aip3368h_display_boot_animation_time_add();
               
               #endif
-  88   2      
-  89   2              ui_timer_handle_isr();
   90   2      
-  91   2              // USER_TO_DO 只在测试时只用：
-  92   2              // aip3368h_display_test_light_blink_1ms_isr();
-  93   2      
-  94   2              // aip3368h_display_test_back_light_scale_bar();
-  95   2              // aip3368h_display_test_engine_speed_scale_bar();
-  96   2              // aip3368h_display_test_engine_speed_digit_scale();
-  97   2              // aip3368h_display_test_gear();
-  98   2              // aip3368h_display_test_speed();
-  99   2              // aip3368h_display_test_mileage();
- 100   2              // aip3368h_display_test_fuel();
+  91   2              ui_timer_handle_isr();
+  92   2      
+  93   2              // USER_TO_DO 只在测试时只用：
+  94   2      
+  95   2      #if AIP3368H_DISPLAY_TEST_ENABLE
+  96   2              // aip3368h_display_engine_speed_gear_test_1ms_isr();
+  97   2              // aip3368h_display_engine_speed_scale_test_1ms_isr();
+  98   2      
+  99   2              aip3368h_display_light_blink_test_1ms_isr();
+ 100   2      #endif
  101   2      
- 102   2              // {
- 103   2              //     static u16 cnt = 0;
- 104   2              //     static u8 dir = 0;
- 105   2              //     cnt++;
- 106   2              //     if (cnt >= 500)
- 107   2              //     {
- 108   2              //         cnt = 0;
- 109   2              //         dir = !dir;
- 110   2      
- 111   2              //         if (dir)
- 112   2              //         {
- 113   2              //             aip3368h_module_set_brightness(0);
- 114   2      
-C51 COMPILER V9.60.7.0   TMR1                                                              08/01/2026 16:50:41 PAGE 3   
+ 102   2              // aip3368h_display_test_light_blink_1ms_isr();
+ 103   2      
+ 104   2              // aip3368h_display_test_back_light_scale_bar();
+ 105   2              // aip3368h_display_test_engine_speed_scale_bar();
+ 106   2              // aip3368h_display_test_engine_speed_digit_scale();
+ 107   2              // aip3368h_display_test_gear();
+ 108   2              // aip3368h_display_test_speed();
+ 109   2              // aip3368h_display_test_mileage();
+ 110   2              // aip3368h_display_test_fuel();
+ 111   2      
+ 112   2              // {
+ 113   2              //     static u16 cnt = 0;
+ 114   2              //     static u8 dir = 0;
+C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 3   
 
- 115   2              //         }
- 116   2              //         else
- 117   2              //         {
- 118   2              //             aip3368h_module_set_brightness(80);
- 119   2              //         }
- 120   2              //     }
- 121   2              // }
- 122   2          }
- 123   1      
- 124   1          // 退出中断设置IP，不可删除
- 125   1          __IRQnIPnPop(TMR1_IRQn);
- 126   1      }
+ 115   2              //     cnt++;
+ 116   2              //     if (cnt >= 500)
+ 117   2              //     {
+ 118   2              //         cnt = 0;
+ 119   2              //         dir = !dir;
+ 120   2      
+ 121   2              //         if (dir)
+ 122   2              //         {
+ 123   2              //             aip3368h_module_set_brightness(0);
+ 124   2      
+ 125   2              //         }
+ 126   2              //         else
+ 127   2              //         {
+ 128   2              //             aip3368h_module_set_brightness(80);
+ 129   2              //         }
+ 130   2              //     }
+ 131   2              // }
+ 132   2          }
+ 133   1      
+ 134   1          // 退出中断设置IP，不可删除
+ 135   1          __IRQnIPnPop(TMR1_IRQn);
+ 136   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    133    ----
+   CODE SIZE        =    136    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

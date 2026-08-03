@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/01/2026 16:50:43 PAGE 1   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/03/2026 17:58:49 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE INSTRUMENT
@@ -62,7 +62,7 @@ line level    source
              -次上电读出数据时，验证该标志位
   51   1          // 先擦除扇区再写入
   52   1          flash_erase_sector(FLASH_START_ADDR);
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/01/2026 16:50:43 PAGE 2   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/03/2026 17:58:49 PAGE 2   
 
   53   1          flash_program(FLASH_START_ADDR,
   54   1                        (u8 *)&instrument.save_info,

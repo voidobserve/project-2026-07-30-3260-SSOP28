@@ -64,35 +64,47 @@ static void aip3368h_module_send_data_to_all_dev(
     volatile u16 dat_group_1;
     volatile u16 dat_group_2;
 
+    /*
+        两组级联（时速面板 6 颗、发动机转速面板 8 颗）共用 DCK 和 LAT，
+        因此一帧的时钟数必须等于最大的级联数（AIP3368_MAX_IC_NUM = 8 个字）。
+
+        移位寄存器型级联：先发的数据会填充到最远端的芯片，
+        发多了的字会从级联链末端移出而丢失（不是“截取前一段再转发”）。
+        所以级联数较少的一组，数据必须从帧的“末尾”开始发送：
+        字偏移 offset = AIP3368_MAX_IC_NUM - 本组级联数。
+        时速面板 offset = 8 - 6 = 2，其 6 个字占帧的第 2~7 个位置，
+        恰好落在 6 颗芯片上，前面 2 个字补 0（被移出丢失，无影响）。
+        发动机转速面板 offset = 0，8 个字正好占满整帧。
+    */
+    volatile u8 offset_group_1 = AIP3368_MAX_IC_NUM - len_group_1;
+    volatile u8 offset_group_2 = AIP3368_MAX_IC_NUM - len_group_2;
+
     // 开始
     DCK = 0;
     LAT = 0;
     aip3368h_delay();
 
     // 一帧完整数据
-    // for (i = 0; i < max_len; i++)
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < AIP3368_MAX_IC_NUM; i++)
     {
-        dat_group_1 = buff_group_1[i];
-        dat_group_2 = buff_group_2[i];
+        // 本组数据在帧中的位置：i < offset 的部分补 0（会被移出级联链）
+        dat_group_1 = 0;
+        dat_group_2 = 0;
+
+        if (i >= offset_group_1)
+        {
+            dat_group_1 = buff_group_1[i - offset_group_1];
+        }
+
+        if (i >= offset_group_2)
+        {
+            dat_group_2 = buff_group_2[i - offset_group_2];
+        }
 
         for (j = 0; j < 16; j++)
         {
-            // REVIEW 不确定数据超过芯片级联的长度后，芯片还能不能正常显示
-            if (len_group_1 > i)
-            {
-                /*
-                    防止访问越界，虽然发送时还是会按照最大的那个数组对应的长度
-                    进行发送，但是显示驱动ic接收时，会截取收到的前一段数据，
-                    再转发给下一级级联的ic，不会影响显示
-                */
-                DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
-            }
-
-            if (len_group_2 > i)
-            {
-                DIO_GROUP_2 = dat_group_2 & (u16)0x8000 ? 1 : 0;
-            }
+            DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
+            DIO_GROUP_2 = dat_group_2 & (u16)0x8000 ? 1 : 0;
 
             aip3368h_delay();
             DCK = 1;
@@ -110,13 +122,13 @@ static void aip3368h_module_send_data_to_all_dev(
     LAT = 1;
     aip3368h_delay();
     LAT = 0;
-    // PDM = 0;
     aip3368h_delay();
     DIO_GROUP_1 = 0;
     DIO_GROUP_2 = 0;
 }
 
 #define AIP3368H_FLASH_TEST_ENABLE 0
+
 // 根据显存中的数据，更新显示
 void aip3368h_module_display(void)
 {
@@ -130,6 +142,10 @@ void aip3368h_module_display(void)
     {
         aip3368h_refresh_cnt = 0;
     }
+
+#if USER_DEBUG_ENABLE
+// printf("aip3368h_module_display\n");
+#endif
 
 #if AIP3368H_FLASH_TEST_ENABLE
 
@@ -207,7 +223,8 @@ void aip3368h_module_init(void)
         aip3368h_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM,
         aip3368h_engine_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM);
 
-    aip3368h_module_set_brightness(100); // TEST ONLY
+    // TEST ONLY 样机使用最高亮度，实际使用时根据需要调整
+    aip3368h_module_set_brightness(30);
 }
 
 /**

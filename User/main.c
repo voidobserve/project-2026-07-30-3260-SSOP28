@@ -67,7 +67,7 @@ void user_init(void)
     delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
 
     // 上电时立即更新一次亮度值，再跑开机动画
-    // photosensitive_init();
+    // photosensitive_init(); // 光敏初始化
 }
 
 void main(void)
@@ -105,7 +105,8 @@ void main(void)
 
 #endif
 
-    aip3368h_display_test(); // TEST ONLY
+    // aip3368h_display_test(); // TEST ONLY
+    // aip3368h_display_engine_speed_gear(10);
 
     /* 系统主循环 */
     while (1)
@@ -142,6 +143,8 @@ void main(void)
         photosensitive_scan(); // 光敏检测 -> 调节亮度
 
 #endif
+
+ 
 
         ui_display_handle();
     }

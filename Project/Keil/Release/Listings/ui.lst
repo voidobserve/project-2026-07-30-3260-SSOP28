@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI                                                                08/01/2026 16:50:43 PAGE 1   
+C51 COMPILER V9.60.7.0   UI                                                                08/03/2026 17:58:50 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI
@@ -62,7 +62,7 @@ line level    source
   51          // 设置ui状态（切换ui）
   52          void ui_set_state(ui_state_t state)
   53          {
-C51 COMPILER V9.60.7.0   UI                                                                08/01/2026 16:50:43 PAGE 2   
+C51 COMPILER V9.60.7.0   UI                                                                08/03/2026 17:58:50 PAGE 2   
 
   54   1              ui_manager.state = state;
   55   1      
@@ -126,7 +126,7 @@ line level    source
                                               // 直接读取显存，判断有没有点亮对应的指示灯
                                               if ((aip3368h_display_buff[5] >> 11) & 0x01)
                                               {
-C51 COMPILER V9.60.7.0   UI                                                                08/01/2026 16:50:43 PAGE 3   
+C51 COMPILER V9.60.7.0   UI                                                                08/03/2026 17:58:50 PAGE 3   
 
                                                       // 如果是点亮的，改为熄灭
                                                       __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 0);
@@ -190,7 +190,7 @@ line level    source
               
               
                       aip3368h_display_speed_handle();                // 显示时速
-C51 COMPILER V9.60.7.0   UI                                                                08/01/2026 16:50:43 PAGE 4   
+C51 COMPILER V9.60.7.0   UI                                                                08/03/2026 17:58:50 PAGE 4   
 
                       aip3368h_display_mileage_handle();              // 显示里程
                       aip3368h_display_engine_speed_handle(); // 显示发动机转速
@@ -254,7 +254,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =     39    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =      7    ----
-C51 COMPILER V9.60.7.0   UI                                                                08/01/2026 16:50:43 PAGE 5   
+C51 COMPILER V9.60.7.0   UI                                                                08/03/2026 17:58:50 PAGE 5   
 
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----

@@ -1,5 +1,8 @@
 #include "tmr1.h"
 
+#include "aip3368h_display.h"
+#include "ui.h"
+
 // 定时器定时周期 (单位:Hz)
 // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
 #define TMR1_PERIOD (SYSCLK / 128 / 1000 - 1) // 1000Hz,1ms
@@ -19,7 +22,7 @@ void tmr1_config(void)
     TMR1_CONL &= ~TMR_PRESCALE_SEL(0x07); // 清除TMR1的预分频配置寄存器
     TMR1_CONL |= TMR_PRESCALE_SEL(0x07);  // 定时器预分频
     TMR1_CONL &= ~TMR_MODE_SEL(0x03);     // 清除TMR1的模式配置寄存器
-    TMR1_CONL |= TMR_MODE_SEL(0x01);      // 配置TMR1的模式为计数器模式，最后对系统时钟的脉冲进行计数
+    TMR1_CONL |= TMR_MODE_SEL(0x01); // 配置TMR1的模式为计数器模式，最后对系统时钟的脉冲进行计数
 
     TMR1_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR1的计数标志位，表示未完成计数
     TMR1_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR1的计数中断
@@ -48,8 +51,7 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
     // ---------------- 用户函数处理 -------------------
 
     // 周期中断
-    if (TMR1_CONH & TMR_PRD_PND(0x1))
-    {
+    if (TMR1_CONH & TMR_PRD_PND(0x1)) {
         TMR1_CONH |= TMR_PRD_PND(0x1); // 清除pending
 
 #if 0
@@ -89,6 +91,14 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
         ui_timer_handle_isr();
 
         // USER_TO_DO 只在测试时只用：
+
+#if AIP3368H_DISPLAY_TEST_ENABLE
+        // aip3368h_display_engine_speed_gear_test_1ms_isr();
+        // aip3368h_display_engine_speed_scale_test_1ms_isr();
+
+        aip3368h_display_light_blink_test_1ms_isr();
+#endif
+
         // aip3368h_display_test_light_blink_1ms_isr();
 
         // aip3368h_display_test_back_light_scale_bar();

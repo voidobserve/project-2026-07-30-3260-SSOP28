@@ -14,6 +14,13 @@
 */
 #define AIP3368H_ENGINE_SPEED_PANEL_IC_NUM 8
 
+#if (AIP3368H_SPEED_PANEL_IC_NUM >= AIP3368H_ENGINE_SPEED_PANEL_IC_NUM)
+#define AIP3368_MAX_IC_NUM AIP3368H_SPEED_PANEL_IC_NUM
+#else
+#define AIP3368_MAX_IC_NUM AIP3368H_ENGINE_SPEED_PANEL_IC_NUM
+#endif
+
+
 /*
 	串行数据输入端
 	时速面板对应的芯片级联的DIO
@@ -37,7 +44,7 @@ void aip3368h_refresh_time_add();
 
 void aip3368h_module_init(void);
 // void aip3368h_module_uninit(void);
-void aip3368h_module_display(void);
+void aip3368h_module_display(void); 
 // void aip3368h_module_clear(void);
 
 void aip3368h_module_set_brightness(u8 brightness);

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              08/03/2026 17:58:48 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   51   1      #endif
   52   1      
   53   1      #if ENGINE_SPEED_SCAN_ENABLE
-C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 2   
+C51 COMPILER V9.60.7.0   MAIN                                                              08/03/2026 17:58:48 PAGE 2   
 
   54   1          // engine_speed_scan_config(); // 发动机转速扫描的配置
   55   1      #endif
@@ -80,7 +80,7 @@ line level    source
   67   1          delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
   68   1      
   69   1          // 上电时立即更新一次亮度值，再跑开机动画
-  70   1          // photosensitive_init();
+  70   1          // photosensitive_init(); // 光敏初始化
   71   1      }
   72          
   73          void main(void)
@@ -119,19 +119,20 @@ line level    source
               
               #endif
  107   1      
- 108   1          aip3368h_display_test(); // TEST ONLY
- 109   1      
- 110   1          /* 系统主循环 */
- 111   1          while (1)
- 112   1          {
- 113   2              // printf("main circle\n");
- 114   2              // DEBUG_PIN = ~DEBUG_PIN;
-C51 COMPILER V9.60.7.0   MAIN                                                              08/01/2026 16:55:59 PAGE 3   
+ 108   1          // aip3368h_display_test(); // TEST ONLY
+ 109   1          // aip3368h_display_engine_speed_gear(10);
+ 110   1      
+ 111   1          /* 系统主循环 */
+ 112   1          while (1)
+ 113   1          {
+ 114   2              // printf("main circle\n");
+C51 COMPILER V9.60.7.0   MAIN                                                              08/03/2026 17:58:48 PAGE 3   
 
- 115   2      
- 116   2              WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
- 117   2      
- 118   2      #if 0
+ 115   2              // DEBUG_PIN = ~DEBUG_PIN;
+ 116   2      
+ 117   2              WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
+ 118   2      
+ 119   2      #if 0
               
               #if PIN_LEVEL_SCAN_ENABLE
                       pin_level_scan();
@@ -158,20 +159,22 @@ line level    source
                       photosensitive_scan(); // 光敏检测 -> 调节亮度
               
               #endif
- 145   2      
- 146   2              ui_display_handle();
- 147   2          }
- 148   1      }
- 149          
- 150          /**
- 151           * @}
- 152           */
- 153          
- 154          /*************************** (C) COPYRIGHT 2022 HUGE-IC ***** END OF FILE *****/
+ 146   2      
+ 147   2       
+ 148   2      
+ 149   2              ui_display_handle();
+ 150   2          }
+ 151   1      }
+ 152          
+ 153          /**
+ 154           * @}
+ 155           */
+ 156          
+ 157          /*************************** (C) COPYRIGHT 2022 HUGE-IC ***** END OF FILE *****/
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     65    ----
+   CODE SIZE        =     62    ----
    CONSTANT SIZE    =     11    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
