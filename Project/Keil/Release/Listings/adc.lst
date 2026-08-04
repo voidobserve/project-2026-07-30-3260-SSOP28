@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   ADC                                                               08/03/2026 17:58:48 PAGE 1   
+C51 COMPILER V9.60.7.0   ADC                                                               08/04/2026 17:53:57 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
@@ -62,7 +62,7 @@ line level    source
   51   2              ADC_ACON1 &= ~((0x01 << 5) |       // 关闭ADC外部参考选择信号
   52   2                             (0x07 << 0));       // 清空ADC内部参考电压的选择配置
   53   2              ADC_ACON1 |= (0x01 << 6) |         // 使能ADC内部参考信号
-C51 COMPILER V9.60.7.0   ADC                                                               08/03/2026 17:58:48 PAGE 2   
+C51 COMPILER V9.60.7.0   ADC                                                               08/04/2026 17:53:57 PAGE 2   
 
   54   2                           (0x03 << 3) |         // 关闭测试信号
   55   2                           (0x01 << 0);          // 内部参考电压选择 2.0 V
@@ -126,7 +126,7 @@ line level    source
               #endif
  114          
  115          // 由定时器调用，adc通道切换
-C51 COMPILER V9.60.7.0   ADC                                                               08/03/2026 17:58:48 PAGE 3   
+C51 COMPILER V9.60.7.0   ADC                                                               08/04/2026 17:53:57 PAGE 3   
 
  116          void adc_channel_switch_by_isr(void)
  117          {
@@ -190,7 +190,7 @@ line level    source
  175          #endif
 
 
-C51 COMPILER V9.60.7.0   ADC                                                               08/03/2026 17:58:48 PAGE 4   
+C51 COMPILER V9.60.7.0   ADC                                                               08/04/2026 17:53:57 PAGE 4   
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =    283    ----

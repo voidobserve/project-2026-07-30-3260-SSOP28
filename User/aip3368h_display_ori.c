@@ -1,5 +1,5 @@
-#include "aip3368h_display.h"
 #include "aip3368.h"
+#include "aip3368h_display_ori.h"
 #include "user_config.h"
 
 // ========================================================================
@@ -33,96 +33,47 @@ static volatile u16 aip3368h_display_err_handle_time_cnt = 0;
 
 // 背光灯刻度条的映射关系表：
 static const aip3368h_display_mapping_t back_light_scale_bar_map[] = {
-    {10, 5},
-    {10, 2},
-    {9, 2},
-    {9, 4},
-    {9, 7},
+    {10, 5}, {10, 2}, {9, 2},  {9, 4},  {9, 7},
 
     {9, 10}, // 第 5 个灯
-    {9, 9},
-    {8, 2},
-    {8, 4},
-    {8, 7},
+    {9, 9},  {8, 2},  {8, 4},  {8, 7},
 
     {8, 6}, // 第 10 个灯
-    {8, 9},
-    {8, 10},
-    {8, 12},
-    {8, 13},
+    {8, 9},  {8, 10}, {8, 12}, {8, 13},
 
     {6, 10}, // 第 15 个灯
-    {6, 9},
-    {6, 13},
-    {6, 15},
-    {0, 5},
+    {6, 9},  {6, 13}, {6, 15}, {0, 5},
 
     {0, 3}, // 第 20 个灯
-    {0, 2},
-    {1, 13},
-    {1, 12},
-    {1, 3},
+    {0, 2},  {1, 13}, {1, 12}, {1, 3},
 
     {1, 2}, // 第 25 个灯
-    {1, 1},
-    {2, 4},
-    {2, 7},
-    {2, 6},
+    {1, 1},  {2, 4},  {2, 7},  {2, 6},
 
     {2, 8}, // 第 30 个灯
-    {2, 9},
-    {2, 10},
+    {2, 9},  {2, 10},
 };
 
 // 发动机转速刻度条的映射关系表：
 static const aip3368h_display_mapping_t engine_speed_scale_bar_map[] = {
-    {10, 7},
-    {10, 6},
-    {10, 4},
-    {10, 3},
-    {10, 1},
+    {10, 7}, {10, 6}, {10, 4}, {10, 3}, {10, 1},
 
-    {10, 0},
-    {9, 0},
-    {9, 3},
-    {9, 5},
-    {9, 11},
+    {10, 0}, {9, 0},  {9, 3},  {9, 5},  {9, 11},
 
-    {9, 8},
-    {8, 1},
-    {8, 3},
-    {8, 5},
-    {8, 8},
+    {9, 8},  {8, 1},  {8, 3},  {8, 5},  {8, 8},
 
-    {8, 11},
-    {8, 14},
-    {6, 4},
-    {6, 5},
-    {6, 6},
+    {8, 11}, {8, 14}, {6, 4},  {6, 5},  {6, 6},
 
-    {6, 12},
-    {6, 14},
-    {0, 6},
-    {0, 4},
+    {6, 12}, {6, 14}, {0, 6},  {0, 4},
 };
 
 // 发动机转速的数字刻度对应的映射关系：
 static const aip3368h_display_mapping_t engine_speed_digit_scale_map[] = {
-    {5, 9},
-    {7, 6},
-    {7, 7},
-    {7, 8},
-    {9, 1},
+    {5, 9},  {7, 6},  {7, 7},  {7, 8},  {9, 1},
 
-    {9, 12},
-    {9, 13},
-    {8, 0},
-    {8, 15},
-    {6, 7},
+    {9, 12}, {9, 13}, {8, 0},  {8, 15}, {6, 7},
 
-    {6, 2},
-    {0, 7},
-    {1, 11},
+    {6, 2},  {0, 7},  {1, 11},
 };
 
 // 挡位数码管的映射关系表：
@@ -239,10 +190,7 @@ static const aip3368h_display_mapping_t mileage_segment_map[6][7] = {
 // 油量指示灯的映射关系表：
 static const aip3368h_display_mapping_t fuel_level_map[] = {
     {10, 15}, // 第 0 个灯
-    {10, 14},
-    {10, 12},
-    {10, 11},
-    {10, 10},
+    {10, 14}, {10, 12}, {10, 11}, {10, 10},
 
     {10, 9},
 };
@@ -1461,12 +1409,9 @@ void aip3368h_display_test_light_blink_1ms_isr(void)
     static u8 is_enable = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
@@ -1514,20 +1459,16 @@ void aip3368h_display_test_back_light_scale_bar(void)
     static u8 level = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
     aip3368h_display_back_light_scale_bar(level);
 
     level++;
-    if (level >= 34)
-    {
+    if (level >= 34) {
         level = 0;
     }
 }
@@ -1542,19 +1483,15 @@ void aip3368h_display_test_engine_speed_scale_bar(void)
     static u8 level = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
     aip3368h_display_engine_speed_scale_bar(level);
     level++;
-    if (level >= 25)
-    {
+    if (level >= 25) {
         level = 0;
     }
 }
@@ -1569,19 +1506,15 @@ void aip3368h_display_test_engine_speed_digit_scale(void)
     static u8 level = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
     aip3368h_display_engine_speed_digit_scale(level);
     level++;
-    if (level >= 14)
-    {
+    if (level >= 14) {
         level = 0;
     }
 }
@@ -1593,29 +1526,22 @@ void aip3368h_display_test_gear(void)
     static u8 level = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
-    if (level == 0)
-    {
+    if (level == 0) {
         __aip3368h_display_gear_n_light__(0);
         __aip3368h_display_gear_digit__(0);
-    }
-    else
-    {
+    } else {
         // 最大传入 6
         aip3368h_display_gear(level - 1);
     }
 
     level++;
-    if (level >= 8)
-    {
+    if (level >= 8) {
         level = 0;
     }
 }
@@ -1626,19 +1552,15 @@ void aip3368h_display_test_speed(void)
     static u8 speed = 0;
 
     cnt++;
-    if (cnt < 200)
-    {
+    if (cnt < 200) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
     aip3368h_display_speed(speed);
     speed++;
-    if (speed >= 200)
-    {
+    if (speed >= 200) {
         speed = 0;
     }
 }
@@ -1649,32 +1571,20 @@ void aip3368h_display_test_mileage(void)
     static u8 index = 0;
     static u8 is_displaying_total_mileage = 0;
     const u32 buff[] = {
-        111111,
-        222222,
-        333333,
-        444444,
-        555555,
-        666666,
-        777777,
-        888888,
-        999999,
+        111111, 222222, 333333, 444444, 555555, 666666, 777777, 888888, 999999,
     };
 
     cnt++;
-    if (cnt < 200)
-    {
+    if (cnt < 200) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
     aip3368h_display_mileage(buff[index], is_displaying_total_mileage);
     is_displaying_total_mileage = !is_displaying_total_mileage;
     index++;
-    if (index >= ARRAY_SIZE(buff))
-    {
+    if (index >= ARRAY_SIZE(buff)) {
         index = 0;
     }
 }
@@ -1682,17 +1592,13 @@ void aip3368h_display_test_mileage(void)
 void aip3368h_display_test_fuel(void)
 {
     static u16 cnt = 0;
-    static aip3368h_display_fuel_level_t fuel_level =
-        AIP3368H_DISPLAY_FUEL_LEVEL_EMPTY;
+    static aip3368h_display_fuel_level_t fuel_level = AIP3368H_DISPLAY_FUEL_LEVEL_EMPTY;
     static u8 is_enable = 0;
 
     cnt++;
-    if (cnt < 500)
-    {
+    if (cnt < 500) {
         return;
-    }
-    else
-    {
+    } else {
         cnt = 0;
     }
 
@@ -1702,8 +1608,7 @@ void aip3368h_display_test_fuel(void)
     aip3368h_display_fuel_level(fuel_level);
 
     fuel_level++;
-    if (fuel_level > AIP3368H_DISPLAY_FUEL_LEVEL_5)
-    {
+    if (fuel_level > AIP3368H_DISPLAY_FUEL_LEVEL_5) {
         fuel_level = AIP3368H_DISPLAY_FUEL_LEVEL_EMPTY;
     }
 
@@ -1817,7 +1722,6 @@ void aip3368h_display_test(void)
     // aip3368h_speed_panel_display_buff[5] |= 0x01 << 14; // 时速第 2 位， e 段指示灯（从右往左，从0开始）
     // aip3368h_speed_panel_display_buff[5] |= 0x01 << 15; // 时速第 2 位， d 段指示灯（从右往左，从0开始）
 
-    
     // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 0;  // N 字样对应的指示灯
     // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 1;  // 时间，小时十位，a 段指示灯
     // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 2;  // 时间，小时十位，f 段指示灯

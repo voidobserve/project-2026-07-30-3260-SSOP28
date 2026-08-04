@@ -95,6 +95,12 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
 #if AIP3368H_DISPLAY_TEST_ENABLE
         // aip3368h_display_engine_speed_gear_test_1ms_isr();
         // aip3368h_display_engine_speed_scale_test_1ms_isr();
+        // aip3368h_display_gear_test_1ms_isr();
+        // aip3368h_display_engine_speed_split_line_test_1ms_isr();
+        // aip3368h_display_time_test_1ms_isr();
+        // aip3368h_display_fuel_lev_upper_marker_test_1ms_isr();
+        // aip3368h_display_fuel_lev_test_1ms_isr();
+        aip3368h_display_speed_test_1ms_isr();
 
         aip3368h_display_light_blink_test_1ms_isr();
 #endif

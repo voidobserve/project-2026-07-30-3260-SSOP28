@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 1   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/04/2026 17:53:56 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR1
@@ -62,7 +62,7 @@ line level    source
   50   1      
   51   1          // ---------------- 用户函数处理 -------------------
   52   1      
-C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 2   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/04/2026 17:53:56 PAGE 2   
 
   53   1          // 周期中断
   54   1          if (TMR1_CONH & TMR_PRD_PND(0x1)) {
@@ -109,51 +109,57 @@ line level    source
   95   2      #if AIP3368H_DISPLAY_TEST_ENABLE
   96   2              // aip3368h_display_engine_speed_gear_test_1ms_isr();
   97   2              // aip3368h_display_engine_speed_scale_test_1ms_isr();
-  98   2      
-  99   2              aip3368h_display_light_blink_test_1ms_isr();
- 100   2      #endif
- 101   2      
- 102   2              // aip3368h_display_test_light_blink_1ms_isr();
- 103   2      
- 104   2              // aip3368h_display_test_back_light_scale_bar();
- 105   2              // aip3368h_display_test_engine_speed_scale_bar();
- 106   2              // aip3368h_display_test_engine_speed_digit_scale();
- 107   2              // aip3368h_display_test_gear();
- 108   2              // aip3368h_display_test_speed();
- 109   2              // aip3368h_display_test_mileage();
- 110   2              // aip3368h_display_test_fuel();
- 111   2      
- 112   2              // {
- 113   2              //     static u16 cnt = 0;
- 114   2              //     static u8 dir = 0;
-C51 COMPILER V9.60.7.0   TMR1                                                              08/03/2026 17:58:47 PAGE 3   
+  98   2              // aip3368h_display_gear_test_1ms_isr();
+  99   2              // aip3368h_display_engine_speed_split_line_test_1ms_isr();
+ 100   2              // aip3368h_display_time_test_1ms_isr();
+ 101   2              // aip3368h_display_fuel_lev_upper_marker_test_1ms_isr();
+ 102   2              // aip3368h_display_fuel_lev_test_1ms_isr();
+ 103   2              aip3368h_display_speed_test_1ms_isr();
+ 104   2      
+ 105   2              aip3368h_display_light_blink_test_1ms_isr();
+ 106   2      #endif
+ 107   2      
+ 108   2              // aip3368h_display_test_light_blink_1ms_isr();
+ 109   2      
+ 110   2              // aip3368h_display_test_back_light_scale_bar();
+ 111   2              // aip3368h_display_test_engine_speed_scale_bar();
+ 112   2              // aip3368h_display_test_engine_speed_digit_scale();
+ 113   2              // aip3368h_display_test_gear();
+ 114   2              // aip3368h_display_test_speed();
+C51 COMPILER V9.60.7.0   TMR1                                                              08/04/2026 17:53:56 PAGE 3   
 
- 115   2              //     cnt++;
- 116   2              //     if (cnt >= 500)
- 117   2              //     {
- 118   2              //         cnt = 0;
- 119   2              //         dir = !dir;
- 120   2      
- 121   2              //         if (dir)
- 122   2              //         {
- 123   2              //             aip3368h_module_set_brightness(0);
- 124   2      
- 125   2              //         }
- 126   2              //         else
- 127   2              //         {
- 128   2              //             aip3368h_module_set_brightness(80);
- 129   2              //         }
- 130   2              //     }
- 131   2              // }
- 132   2          }
- 133   1      
- 134   1          // 退出中断设置IP，不可删除
- 135   1          __IRQnIPnPop(TMR1_IRQn);
- 136   1      }
+ 115   2              // aip3368h_display_test_mileage();
+ 116   2              // aip3368h_display_test_fuel();
+ 117   2      
+ 118   2              // {
+ 119   2              //     static u16 cnt = 0;
+ 120   2              //     static u8 dir = 0;
+ 121   2              //     cnt++;
+ 122   2              //     if (cnt >= 500)
+ 123   2              //     {
+ 124   2              //         cnt = 0;
+ 125   2              //         dir = !dir;
+ 126   2      
+ 127   2              //         if (dir)
+ 128   2              //         {
+ 129   2              //             aip3368h_module_set_brightness(0);
+ 130   2      
+ 131   2              //         }
+ 132   2              //         else
+ 133   2              //         {
+ 134   2              //             aip3368h_module_set_brightness(80);
+ 135   2              //         }
+ 136   2              //     }
+ 137   2              // }
+ 138   2          }
+ 139   1      
+ 140   1          // 退出中断设置IP，不可删除
+ 141   1          __IRQnIPnPop(TMR1_IRQn);
+ 142   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    136    ----
+   CODE SIZE        =    139    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

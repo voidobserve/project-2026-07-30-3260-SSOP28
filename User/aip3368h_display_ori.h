@@ -1,5 +1,5 @@
-#ifndef __AIP3368H_DISPLAY_H__
-#define __AIP3368H_DISPLAY_H__
+#ifndef __AIP3368H_DISPLAY_ORI_H__
+#define __AIP3368H_DISPLAY_ORI_H__
 
 // #include "user_config.h"
 #include "instrument.h"
@@ -11,9 +11,9 @@
 typedef struct
 {
     // display_buff[] 中对应元素索引
-    u8 buff_index; 
+    u8 buff_index;
     // display_buff[] 中对应元素中的第 x 位（按二进制数的排列方式，从右往左数）
-    u8 bit_offset; 
+    u8 bit_offset;
 } aip3368h_display_mapping_t;
 
 // 数码管 A ~ G 段索引值
@@ -68,10 +68,10 @@ typedef struct
 } aip3368h_display_obj_t;
 extern volatile aip3368h_display_obj_t aip3368h_display_obj;
 
-void aip3368h_display_left_turn_light(u8 is_enable);           // 左转灯
-void aip3368h_display_right_turn_light(u8 is_enable);          // 右转灯
-void aip3368h_display_err_light(u8 is_enable);                 // 故障 指示
-void aip3368h_display_low_beam_indicator_light(u8 is_enable);  // 显示 小灯（近光灯） 指示灯
+void aip3368h_display_left_turn_light(u8 is_enable);  // 左转灯
+void aip3368h_display_right_turn_light(u8 is_enable); // 右转灯
+void aip3368h_display_err_light(u8 is_enable);        // 故障 指示
+void aip3368h_display_low_beam_indicator_light(u8 is_enable); // 显示 小灯（近光灯） 指示灯
 void aip3368h_display_high_beam_indicator_light(u8 is_enable); // 显示 大灯（远光灯） 指示灯
 void aip3368h_display_back_light_scale_bar(u8 level);
 void aip3368h_display_engine_speed_scale_bar(u8 level);
