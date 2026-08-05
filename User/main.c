@@ -17,10 +17,21 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "include.h"
+#include <string.h>
+
+#include "aip3368.h"
+#include "aip3368h_display.h"
+#include "tmr1.h"
+#include "tmr2.h"
+
+#include "ui.h"
 #include "user_config.h"
-#include "string.h"
+
+#include "boot_animation.h" 
 
 #if USER_DEBUG_ENABLE
+#include "uart0.h"
+
 void debug_pin_init(void)
 {
     // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
@@ -65,9 +76,6 @@ void user_init(void)
     tmr2_config(); // 扫描脉冲(电平变化)的定时器
 
     delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
-
-    // 上电时立即更新一次亮度值，再跑开机动画
-    // photosensitive_init(); // 光敏初始化
 }
 
 void main(void)
@@ -78,7 +86,7 @@ void main(void)
     // WDT_KEY = WDT_KEY_VAL(0xDD); //  关闭看门狗
 
     // 关闭HCK和HDA的调试功能
-    WDT_KEY = 0x55;  // 解除写保护
+    WDT_KEY = 0x55; // 解除写保护
     IO_MAP &= ~0x01; // 清除这个寄存器的值，实现关闭HCK和HDA引脚的调试功能（解除映射）
     WDT_KEY = 0xBB;
 
@@ -105,12 +113,12 @@ void main(void)
 
 #endif
 
-    // aip3368h_display_test(); // TEST ONLY
-    // aip3368h_display_engine_speed_gear(10);
+    // aip3368h_display_mileage(123456, MILEAGE_DISPLAY_MODE_ODO);
+    // aip3368h_display_mileage(789012, MILEAGE_DISPLAY_MODE_TRIP);
+    boot_animation_process();
 
     /* 系统主循环 */
-    while (1)
-    {
+    while (1) {
         // printf("main circle\n");
         // DEBUG_PIN = ~DEBUG_PIN;
 
@@ -140,11 +148,7 @@ void main(void)
         fuel_capacity_scan(); // 油量检测
 #endif
 
-        photosensitive_scan(); // 光敏检测 -> 调节亮度
-
 #endif
-
- 
 
         ui_display_handle();
     }

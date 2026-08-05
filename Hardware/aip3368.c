@@ -1,9 +1,9 @@
 #include "aip3368.h"
 
-#include "string.h" // memset
+#include <string.h> // memset
 #include "include.h"
 
-#include "user_config.h"
+#include "user_config.h" // USER_DEBUG_ENABLE
 
 #if 1 // AIP3368H_MODULE
 

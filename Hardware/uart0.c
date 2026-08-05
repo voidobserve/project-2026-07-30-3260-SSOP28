@@ -1,4 +1,5 @@
 #include "uart0.h"
+#include "include.h" // 使用芯片官方提供的头文件
 
 #if USER_DEBUG_ENABLE
 // 设置的波特率需要适配单片机的时钟，这里直接使用了官方的代码
@@ -15,7 +16,7 @@ char putchar(char c)
 #endif // 将uart0用作串口打印
 
 void uart0_debug_init(void)
-{ 
+{
     P0_MD0 &= ~(GPIO_P00_MODE_SEL(0x03)); // 清空寄存器配置
     P0_MD0 |= GPIO_P00_MODE_SEL(0x01);    // 输出模式
     FOUT_S00 |= GPIO_FOUT_UART0_TX;       // 配置为UART0_TX
@@ -34,4 +35,4 @@ void uart0_send_byte(u8 byte)
     UART0_DATA = byte;
 }
 
-#endif  
+#endif

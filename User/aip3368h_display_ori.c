@@ -1,5 +1,5 @@
-#include "aip3368.h"
 #include "aip3368h_display_ori.h"
+#include "aip3368.h"
 #include "user_config.h"
 
 // ========================================================================

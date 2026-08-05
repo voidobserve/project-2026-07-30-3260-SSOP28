@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   TMR2                                                              08/04/2026 17:53:57 PAGE 1   
+C51 COMPILER V9.60.7.0   TMR2                                                              08/05/2026 16:19:20 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR2
@@ -11,72 +11,69 @@ line level    source
 
    1          // 定时器TMR2的驱动源文件
    2          #include "tmr2.h"
-   3          #include "user_config.h"
+   3          #include "include.h"
    4          
    5          // 定时器定时周期 (单位:Hz)
    6          // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
-   7          #define TMR2_PERIOD (SYSCLK / 1 / 20000 - 1) // 20khz，50us
-   8          // #define TMR2_PERIOD (SYSCLK / 1 / 10000 - 1) // 10khz，100us
-   9          
-  10          // static volatile u8 tmr2_cnt = 0; // 定时器TMR2的计数值（每次在中断服务函数中会加一
-             -）
-  11          
-  12          /**
-  13           * @brief 配置定时器TMR2，配置完成后，定时器默认关闭
-  14           */
-  15          void tmr2_config(void)
-  16          {
-  17   1          __SetIRQnIP(TMR2_IRQn, TMR2_IQn_CFG); // 设置中断优先级
-  18   1          __DisableIRQ(TMR2_IRQn);              // 禁用中断
-  19   1          IE_EA = 1;                            // 打开总中断
-  20   1      
-  21   1          // 清除TMR2的计数值
-  22   1          TMR_ALLCON = TMR2_CNT_CLR(0x1); // 清除计数值
+   7          #define TMR2_PERIOD (SYSCLK / 1 / 20000 - 1) // 20khz，50us 
+   8          /**
+   9           * @brief 配置定时器TMR2，配置完成后，定时器默认关闭
+  10           */
+  11          void tmr2_config(void)
+  12          {
+  13   1          __SetIRQnIP(TMR2_IRQn, TMR2_IQn_CFG); // 设置中断优先级
+  14   1          __DisableIRQ(TMR2_IRQn);              // 禁用中断
+  15   1          IE_EA = 1;                            // 打开总中断
+  16   1      
+  17   1          // 清除TMR2的计数值
+  18   1          TMR_ALLCON = TMR2_CNT_CLR(0x1); // 清除计数值
+  19   1      
+  20   1          // 配置TMR2的计数周期
+  21   1          TMR2_PRH = TMR_PERIOD_VAL_H((TMR2_PERIOD >> 8) & 0xFF); // 周期值
+  22   1          TMR2_PRL = TMR_PERIOD_VAL_L((TMR2_PERIOD >> 0) & 0xFF);
   23   1      
-  24   1          // 配置TMR2的计数周期
-  25   1          TMR2_PRH = TMR_PERIOD_VAL_H((TMR2_PERIOD >> 8) & 0xFF); // 周期值
-  26   1          TMR2_PRL = TMR_PERIOD_VAL_L((TMR2_PERIOD >> 0) & 0xFF);
-  27   1      
-  28   1          TMR2_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR2的计数标志位，表示未完成计数
-  29   1          TMR2_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR2的计数中断
-  30   1      
-  31   1          TMR2_CONL &= ~(TMR_SOURCE_SEL(0x07) |   // 清除定时器的时钟源配置寄存器
-  32   1                         TMR_PRESCALE_SEL(0x07) | // 清除TMR2的预分频配置寄存器
-  33   1                         TMR_MODE_SEL(0x03));     // 清除TMR2的模式配置寄存器
-  34   1          TMR2_CONL |= TMR_SOURCE_SEL(0x06) |     // 配置定时器的时钟源，使用系统时钟
-  35   1                       TMR_PRESCALE_SEL(0x00) |   // 定时器预分频
-  36   1                       TMR_MODE_SEL(0x01);        // 配置TMR2的模式为计数器模式，最后对系统时�
+  24   1          TMR2_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR2的计数标志位，表示未完成计数
+  25   1          TMR2_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR2的计数中断
+  26   1      
+  27   1          TMR2_CONL &= ~(TMR_SOURCE_SEL(0x07) |   // 清除定时器的时钟源配置寄存器
+  28   1                         TMR_PRESCALE_SEL(0x07) | // 清除TMR2的预分频配置寄存器
+  29   1                         TMR_MODE_SEL(0x03));     // 清除TMR2的模式配置寄存器
+  30   1          TMR2_CONL |= TMR_SOURCE_SEL(0x06) |     // 配置定时器的时钟源，使用系统时钟
+  31   1                       TMR_PRESCALE_SEL(0x00) |   // 定时器预分频
+  32   1                       TMR_MODE_SEL(0x01);        // 配置TMR2的模式为计数器模式，最后对系统时�
              -��的脉冲进行计数
-  37   1      
-  38   1          __EnableIRQ(TMR2_IRQn); // 使能中断
-  39   1      }
-  40          
-  41          // TMR2中断服务函数
-  42          void TIMR2_IRQHandler(void) interrupt TMR2_IRQn
-  43          {
-  44   1          // 进入中断设置IP，不可删除
-  45   1          __IRQnIPnPush(TMR2_IRQn);
-  46   1      
-  47   1          // ---------------- 用户函数处理 -------------------
-  48   1          // 周期中断
-  49   1          if (TMR2_CONH & TMR_PRD_PND(0x1))
-  50   1          {
-  51   2              TMR2_CONH |= TMR_PRD_PND(0x1); // 清除pending
-C51 COMPILER V9.60.7.0   TMR2                                                              08/04/2026 17:53:57 PAGE 2   
+  33   1      
+  34   1          __EnableIRQ(TMR2_IRQn); // 使能中断
+  35   1      }
+  36          
+  37          // TMR2中断服务函数
+  38          void TIMR2_IRQHandler(void) interrupt TMR2_IRQn
+  39          {
+  40   1          // 进入中断设置IP，不可删除
+  41   1          __IRQnIPnPush(TMR2_IRQn);
+  42   1      
+  43   1          // ---------------- 用户函数处理 -------------------
+  44   1          // 周期中断
+  45   1          if (TMR2_CONH & TMR_PRD_PND(0x1))
+  46   1          {
+  47   2              TMR2_CONH |= TMR_PRD_PND(0x1); // 清除pending
+  48   2      
+  49   2      #if ENGINE_SPEED_SCAN_ENABLE
+*** WARNING C322 IN LINE 49 OF ..\..\Hardware\tmr2.c: unknown identifier
+                      // engine_speed_scan_timer_50us_isr();
+              #endif
+C51 COMPILER V9.60.7.0   TMR2                                                              08/05/2026 16:19:20 PAGE 2   
 
   52   2      
-  53   2      #if ENGINE_SPEED_SCAN_ENABLE
-  54   2              // engine_speed_scan_timer_50us_isr();
-  55   2      #endif
-  56   2      
-  57   2      #if SPEED_SCAN_ENABLE
-  58   2              // speed_scan_timer_50us_isr();
-  59   2      #endif
-  60   2          }
-  61   1      
-  62   1          // 退出中断设置IP，不可删除
-  63   1          __IRQnIPnPop(TMR2_IRQn);
-  64   1      }
+  53   2      #if SPEED_SCAN_ENABLE
+*** WARNING C322 IN LINE 53 OF ..\..\Hardware\tmr2.c: unknown identifier
+                      // speed_scan_timer_50us_isr();
+              #endif
+  56   2          }
+  57   1      
+  58   1          // 退出中断设置IP，不可删除
+  59   1          __IRQnIPnPop(TMR2_IRQn);
+  60   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
@@ -90,4 +87,4 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

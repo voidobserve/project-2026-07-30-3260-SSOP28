@@ -1,5 +1,8 @@
 #include "engine_speed_scan.h"
 
+#include "include.h"
+#include "instrument.h"
+
 #if ENGINE_SPEED_SCAN_ENABLE
 
 volatile u32 engine_speed_scan_cnt; // 检测到的脉冲个数，在定时器中断累加

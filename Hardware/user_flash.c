@@ -29,8 +29,7 @@ void flash_program(u8 addr, u8 *p_data, u8 len)
     FLASH_ADDR = 0x3F;
     FLASH_ADDR = addr;
 
-    while (len >= 1)
-    {
+    while (len >= 1) {
         while (!(FLASH_STA & FLASH_PROG_FLG(0x1)))
             ; // 等待烧录空闲
         FLASH_DATA = *(p_data++);
@@ -50,8 +49,7 @@ void flash_program(u8 addr, u8 *p_data, u8 len)
  */
 void flash_read(u8 addr, u8 *p_data, u8 len)
 {
-    while (len != 0)
-    {
+    while (len != 0) {
         *(p_data++) = *((u8 code *)(0x3F00 + addr++));
         len--;
     }

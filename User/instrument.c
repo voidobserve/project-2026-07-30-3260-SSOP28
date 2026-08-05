@@ -2,6 +2,7 @@
 
 #include "instrument.h"
 #include "user_config.h"
+#include "user_flash.h"
 
 volatile instrument_t instrument = {0};
 

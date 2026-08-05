@@ -392,14 +392,14 @@
           <GroupName>LIb</GroupName>
           <Files>
             <File>
-              <FileName>tk_simplify_algorithm_V1.0.0.LIB</FileName>
-              <FileType>4</FileType>
-              <FilePath>..\..\User\lib\tk_simplify_algorithm_V1.0.0.LIB</FilePath>
-            </File>
-            <File>
               <FileName>tk_set.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\lib\tk_set.c</FilePath>
+            </File>
+            <File>
+              <FileName>tk_simplify_algorithm_V1.0.0.LIB</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\..\User\lib\tk_simplify_algorithm_V1.0.0.LIB</FilePath>
             </File>
           </Files>
         </Group>
@@ -440,11 +440,6 @@
               <FileName>aip3368.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Hardware\aip3368.c</FilePath>
-            </File>
-            <File>
-              <FileName>photosensitive.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\Hardware\photosensitive.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -505,6 +500,11 @@
               <FileName>ui.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\User\ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>boot_animation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\User\boot_animation.c</FilePath>
             </File>
           </Files>
         </Group>

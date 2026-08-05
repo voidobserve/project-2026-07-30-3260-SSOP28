@@ -1,9 +1,9 @@
 #ifndef __INSTRUMENT_H__
 #define __INSTRUMENT_H__
 
-#include "include.h" // 使用芯片官方提供的头文件
+#include "typedef.h" 
 // #include "aip3368h_display.h"
-// #include "user_config.h" // 包含自定义的头文件
+// #include "user_include.h" // 包含自定义的头文件
 
 // 挡位的定义
 enum

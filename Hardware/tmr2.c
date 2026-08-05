@@ -1,14 +1,10 @@
 // 定时器TMR2的驱动源文件
 #include "tmr2.h"
-#include "user_config.h"
+#include "include.h"
 
 // 定时器定时周期 (单位:Hz)
 // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
-#define TMR2_PERIOD (SYSCLK / 1 / 20000 - 1) // 20khz，50us
-// #define TMR2_PERIOD (SYSCLK / 1 / 10000 - 1) // 10khz，100us
-
-// static volatile u8 tmr2_cnt = 0; // 定时器TMR2的计数值（每次在中断服务函数中会加一）
-
+#define TMR2_PERIOD (SYSCLK / 1 / 20000 - 1) // 20khz，50us 
 /**
  * @brief 配置定时器TMR2，配置完成后，定时器默认关闭
  */

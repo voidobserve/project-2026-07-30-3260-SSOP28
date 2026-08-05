@@ -5,6 +5,8 @@
 
 #if (IO_KEY_ENABLE)
 
+#include "typedef.h"
+
 #define NO_KEY (255) // 无效按键的键值
 
 enum KEY_EVENT

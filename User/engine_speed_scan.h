@@ -1,7 +1,7 @@
 #ifndef __ENGINE_SPEED_SCAN_H__
 #define __ENGINE_SPEED_SCAN_H__
 
-#include "include.h"   // 使用芯片官方提供的头文件
+#include "typedef.h"  
 #include "user_config.h" // 包含自定义的头文件
 
 #if ENGINE_SPEED_SCAN_ENABLE

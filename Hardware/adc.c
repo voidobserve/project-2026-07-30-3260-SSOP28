@@ -1,4 +1,5 @@
 #include "adc.h"
+#include "fuel_capacity.h"
 
 #if (FUEL_CAPACITY_SCAN_ENABLE)
 
@@ -26,9 +27,9 @@ void adc_config(void)
                 ADC_BIAS_SEL(0x1); // 偏置电流选择：1x
 
     ADC_TRGS0 |= (0x07 << 4); // 通道 0DLY 的 ADC 时钟个数选择，配置为 4n+1，4 * 29 + 1
-    ADC_CHS0 |= (0x01 << 6);  // 使能 通道 0DLY 功能
-    __EnableIRQ(ADC_IRQn);    // 使能ADC中断
-    IE_EA = 1;                // 使能总中断
+    ADC_CHS0 |= (0x01 << 6); // 使能 通道 0DLY 功能
+    __EnableIRQ(ADC_IRQn);   // 使能ADC中断
+    IE_EA = 1;               // 使能总中断
 
     // adc_channel_set(ADC_CHANNEL_FUEL);
 }
@@ -36,14 +37,9 @@ void adc_config(void)
 // 设置adc通道
 void adc_channel_set(adc_channel_t adc_channel)
 {
-    ADC_CHS0 &= ~((0x01 << 4) |
-                  (0x01 << 3) |
-                  (0x01 << 2) |
-                  (0x01 << 1) |
-                  (0x01 << 0)); // 清空选择的adc0通路
+    ADC_CHS0 &= ~((0x01 << 4) | (0x01 << 3) | (0x01 << 2) | (0x01 << 1) | (0x01 << 0)); // 清空选择的adc0通路
 
-    switch (adc_channel)
-    {
+    switch (adc_channel) {
 
 #if FUEL_CAPACITY_SCAN_ENABLE
         // 检测油量
@@ -56,15 +52,6 @@ void adc_channel_set(adc_channel_t adc_channel)
         ADC_CHS0 |= ADC_ANALOG_CHAN(0x01); // P01 通路
         break;
 #endif
-
-    case ADC_CHANNEL_PHOTOSENSITIVE:
-        ADC_ACON1 &= ~((0x01 << 5) |       // 关闭ADC外部参考选择信号
-                       (0x07 << 0));       // 清空ADC内部参考电压的选择配置
-        ADC_ACON1 |= (0x01 << 6) |         // 使能ADC内部参考信号
-                     (0x03 << 3) |         // 关闭测试信号
-                     (0x03 << 0);          // 内部参考电压选择 3.0 V
-        ADC_CHS0 |= ADC_ANALOG_CHAN(0x0E); // P16 通路
-        break;
     }
 
     ADC_CFG0 |= ADC_CHAN0_EN(0x1) | // 使能通道0转换
@@ -115,25 +102,20 @@ u16 adc_getval(void)
 // 由定时器调用，adc通道切换
 void adc_channel_switch_by_isr(void)
 {
-    switch (adc_channel_status)
-    {
-    case ADC_CHANNEL_STATUS_NONE:
-    case ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_END:
-        adc_channel_set(ADC_CHANNEL_FUEL);
-        adc_channel_status = ADC_CHANNEL_STATUS_SEL_FUEL_BEGIN;
-        break;
-    case ADC_CHANNEL_STATUS_SEL_FUEL_BEGIN:
-        ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
-        adc_channel_status = ADC_CHANNEL_STATUS_SEL_FUEL_END;
-        break;
-    case ADC_CHANNEL_STATUS_SEL_FUEL_END:
-        adc_channel_set(ADC_CHANNEL_PHOTOSENSITIVE);
-        adc_channel_status = ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_BEGIN;
-        break;
-    case ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_BEGIN:
-        ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
-        adc_channel_status = ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_END;
-        break;
+    switch (adc_channel_status) {
+    // case ADC_CHANNEL_STATUS_NONE:
+    // case ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_END:
+    //     adc_channel_set(ADC_CHANNEL_FUEL);
+    //     adc_channel_status = ADC_CHANNEL_STATUS_SEL_FUEL_BEGIN;
+    //     break;
+    // case ADC_CHANNEL_STATUS_SEL_FUEL_BEGIN:
+    //     ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
+    //     adc_channel_status = ADC_CHANNEL_STATUS_SEL_FUEL_END;
+    //     break;
+    // case ADC_CHANNEL_STATUS_SEL_FUEL_END:
+    //     adc_channel_set(ADC_CHANNEL_PHOTOSENSITIVE);
+    //     adc_channel_status = ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_BEGIN;
+    //     break;
     default:
         break;
     }
@@ -147,23 +129,17 @@ void ADC_IRQHandler(void) interrupt ADC_IRQn
     __IRQnIPnPush(ADC_IRQn);
 
     // ---------------- 用户函数处理 -------------------
-    if (ADC_STA & ADC_CHAN0_DONE(0x01))
-    {
-        ADC_STA |= ADC_CHAN0_DONE(0x01);                 // 清除ADC0转换完成标志位
+    if (ADC_STA & ADC_CHAN0_DONE(0x01)) {
+        ADC_STA |= ADC_CHAN0_DONE(0x01); // 清除ADC0转换完成标志位
         adc_val = (ADC_DATAH0 << 4) | (ADC_DATAL0 >> 4); // 读取ADC0的值
 
-        switch (adc_channel_status)
-        {
+        switch (adc_channel_status) {
             // case ADC_CHANNEL_STATUS_SEL_BATTERY_END:
             //     bat_adc_val_samples_update(adc_val);
             //     break;
 
         case ADC_CHANNEL_STATUS_SEL_FUEL_END:
             fuel_capacity_adc_val_samples_update(adc_val);
-            break;
-
-        case ADC_CHANNEL_STATUS_SEL_PHOTOSENSITIVE_END:
-            photosensitive_data_put(adc_val);
             break;
         }
     }

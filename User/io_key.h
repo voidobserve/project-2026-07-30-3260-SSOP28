@@ -2,7 +2,7 @@
 #define __IO_KEY_H__
 
 #include "include.h"   // 使用芯片官方提供的头文件
-#include "user_config.h" // 包含自定义的头文件
+#include "user_include.h" // 包含自定义的头文件
 
 #define IO_KEY_PIN P05
 

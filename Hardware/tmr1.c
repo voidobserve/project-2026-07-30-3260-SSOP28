@@ -1,4 +1,5 @@
 #include "tmr1.h"
+#include "include.h"
 
 #include "aip3368h_display.h"
 #include "ui.h"
@@ -74,8 +75,7 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
 #if FUEL_CAPACITY_SCAN_ENABLE
         fuel_capacity_scan_time_add();
         fuel_lev_update_time_add();
-#endif
-        photosensitive_scan_time_add();
+#endif 
 
         adc_channel_switch_by_isr();
   
@@ -88,6 +88,7 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
 
 #endif
 
+        boot_animation_time_base_add_1ms_isr();
         ui_timer_handle_isr();
 
         // USER_TO_DO 只在测试时只用：
@@ -100,7 +101,11 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
         // aip3368h_display_time_test_1ms_isr();
         // aip3368h_display_fuel_lev_upper_marker_test_1ms_isr();
         // aip3368h_display_fuel_lev_test_1ms_isr();
-        aip3368h_display_speed_test_1ms_isr();
+        // aip3368h_display_speed_test_1ms_isr();
+        // aip3368h_display_speed_split_line_light_test_1ms_isr();
+        // aip3368h_display_mileage_test_1ms_isr();
+        // aip3368h_display_bat_lev_upper_marker_light_test_1ms_isr();
+        // aip3368h_display_bat_lev_light_test_1ms_isr();
 
         aip3368h_display_light_blink_test_1ms_isr();
 #endif
