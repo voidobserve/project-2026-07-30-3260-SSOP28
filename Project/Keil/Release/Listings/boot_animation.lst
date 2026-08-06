@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/05/2026 18:00:04 PAGE 1   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE BOOT_ANIMATION
@@ -10,135 +10,410 @@ COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\boot_animation.c LARG
 line level    source
 
    1          #include "boot_animation.h"
-   2          #include "aip3368h_display.h"
-   3          #include "include.h"
-   4          #include "string.h" // memset
-   5          
-   6          volatile boot_animation_param_t boot_animation_param;
-   7          
-   8          void boot_animation_time_base_add_1ms_isr(void)
-   9          {
-  10   1          if (0 == boot_animation_param.is_in_boot_animation) {
-  11   2              return;
-  12   2          }
-  13   1      
-  14   1          boot_animation_param.time_base_cnt += 1;
-  15   1      }
-  16          
-  17          void __boot_animation_phase_0__(void)
-  18          {
-  19   1      // 控制动画的时间间隔
-  20   1      #define BOOT_ANIMATION_PAHSE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT                \
-  21   1          ((u16)1000 / (8 * 3))
-  22   1      // 发动机转速刻度条对应的动画时间间隔
-  23   1      #define BOOT_ANIMATION_PHASE_0_PERIOD_OF_ENGINE_SPEED_SCALE_BAR                \
-  24   1          ((u16)1000 / (18 * 3))
-  25   1      
-  26   1          // static u8 is_initialized = 0;
-  27   1          static volatile u8 dir = 0; // 动画方向
-  28   1      
-  29   1          static volatile u8 idx_of_speed_split_line_light = 0;
-  30   1          static volatile u8 idx_of_engine_speed_scale_bar = 0;
-  31   1      
-  32   1          static volatile u8 step_of_speed_split_line_light = 0; // 当前xx的动画步骤
-  33   1          static volatile u8 step_of_engine_speed_scale_bar = 0; // 当前xx的动画步骤
-  34   1      
-  35   1          if (boot_animation_param.animation_phase != BOOT_ANIMATION_PAHSE_0) {
-  36   2              return;
-  37   2          }
-  38   1      
-  39   1          // if (!is_initialized) {
-  40   1          //     is_initialized = 1;
-  41   1          //     // step = BOOT_ANIMATION_PAHSE_0_PERIOD;
-  42   1          // }
-  43   1      
-  44   1          step_of_speed_split_line_light++;
-  45   1          if (step_of_speed_split_line_light >= BOOT_ANIMATION_PAHSE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT) {
-  46   2              step_of_speed_split_line_light = 0;
-  47   2              if (0 == dir) {
-  48   3                  // 时速面板上的分割线，7个灯组成流水，不堆积
-  49   3      
-  50   3                  if (idx_of_speed_split_line_light < 8) {
-  51   4                      __aip3368h_display_speed_split_line_light__(idx_of_speed_split_line_light, 1);
-  52   4                  } else {
-  53   4                      __aip3368h_display_speed_split_line_light__(idx_of_speed_split_line_light - 8, 0);
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/05/2026 18:00:04 PAGE 2   
+   2          #include "aip3368.h"
+   3          #include "aip3368h_display.h"
+   4          #include "include.h"
+   5          #include <string.h> // memset
+   6          
+   7          #include "user_config.h"
+   8          
+   9          volatile boot_animation_param_t boot_animation_param;
+  10          
+  11          void boot_animation_time_base_add_1ms_isr(void)
+  12          {
+  13   1          if (0 == boot_animation_param.is_in_boot_animation) {
+  14   2              return;
+  15   2          }
+  16   1      
+  17   1          boot_animation_param.time_base_cnt += 1;
+  18   1      }
+  19          
+  20          void __boot_animation_phase_0__(void)
+  21          {
+  22   1      /*
+  23   1          控制动画的时间间隔
+  24   1          单个方向时，动画持续约1秒，有8个指示灯，将1秒分给8个指示灯用作时间间�
+             -�
+  25   1      */
+  26   1      #define BOOT_ANIMATION_PHASE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT                \
+  27   1          ((u16)1000 / (8 * 3))
+  28   1      // 发动机转速刻度条对应的动画时间间隔
+  29   1      #define BOOT_ANIMATION_PHASE_0_PERIOD_OF_ENGINE_SPEED_SCALE_BAR                \
+  30   1          ((u16)1000 / (18 * 3))
+  31   1      // 油量格数上方的顶部标记的动画时间间隔
+  32   1      #define BOOT_ANIMATION_PHASE_0_PERIOD_OF_FUEL_UPPER_MARKER ((u16)1000 / (5 * 3))
+  33   1      
+  34   1          static volatile u8 dir_of_speed_panel = 0;        // 动画方向
+  35   1          static volatile u8 dir_of_engine_speed_panel = 0; // 动画方向
+  36   1      
+  37   1          static volatile u8 idx_of_speed_panel = 0; // 指示灯的索引值（在时速面板上使用）
+  38   1          static volatile u8 idx_of_engine_speed_panel = 0; // 指示灯的索引值（在发动机面板上使�
+             -��）
+  39   1      
+  40   1          static volatile u8 step_of_speed_panel = 0;        // 当前xx的动画步骤
+  41   1          static volatile u8 step_of_engine_speed_panel = 0; // 当前xx的动画步骤
+  42   1      
+  43   1          if (boot_animation_param.animation_phase != BOOT_ANIMATION_PHASE_0) {
+  44   2              return;
+  45   2          }
+  46   1      
+  47   1      #if USER_DEBUG_ENABLE
+  48   1          // printf("idx_of_speed_panel == %u\n", (u16)idx_of_speed_panel);
+  49   1          // printf("step_of_speed_panel == %u\n", (u16)step_of_speed_panel);
+  50   1      #endif
+  51   1      
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 2   
 
-  54   4                  }
-  55   3      
-  56   3                  idx_of_speed_split_line_light++;
-  57   3                  if (idx_of_speed_split_line_light >= 8 * 2) {
-  58   4                      dir = 1;
-  59   4                  }
-  60   3              } else {
-  61   3                  if (idx_of_speed_split_line_light >= 8) {
-  62   4                      __aip3368h_display_speed_split_line_light__(idx_of_speed_split_line_light - 8, 1);
-  63   4                  } else {
-  64   4                      __aip3368h_display_speed_split_line_light__(idx_of_speed_split_line_light, 0);
-  65   4                  }
-  66   3      
-  67   3                  idx_of_speed_split_line_light--;
-  68   3                  if (idx_of_speed_split_line_light == 0) {
-  69   4                      boot_animation_param.animation_phase = BOOT_ANIMATION_PAHSE_END;
-  70   4                  }
-  71   3              }
-  72   2          }
-  73   1      
-  74   1          step_of_engine_speed_scale_bar++;
-  75   1          if (step_of_engine_speed_scale_bar >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_ENGINE_SPEED_SCALE_BAR) {
-  76   2              step_of_engine_speed_scale_bar = 0;
-  77   2              if (0 == dir) {
-  78   3                  //
-  79   3                  if (idx_of_engine_speed_scale_bar < 18) {
-  80   4                      __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_scale_bar, 1);
-  81   4                  } else {
-  82   4                      __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_scale_bar - 18, 0);
-  83   4                  }
-  84   3      
-  85   3                  idx_of_engine_speed_scale_bar++;
-  86   3                  // if (idx_of_engine_speed_scale_bar >= 18 * 2) {
-  87   3                  //     boot_animation_param.animation_phase = BOOT_ANIMATION_PAHSE_END;
-  88   3                  // }
-  89   3      
-  90   3              } else {
-  91   3              }
-  92   2          }
-  93   1      }
-  94          
-  95          void __boot_animation_phase_1__(void)
-  96          {
-  97   1      }
-  98          
-  99          void boot_animation_process(void)
- 100          {
- 101   1          memset(&boot_animation_param, 0x00, sizeof(boot_animation_param_t));
- 102   1          boot_animation_param.is_in_boot_animation = 1;
- 103   1      
- 104   1          while (boot_animation_param.is_in_boot_animation) {
- 105   2              WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
- 106   2      
- 107   2              if (boot_animation_param.time_base_cnt < 1) {
- 108   3                  // 时间未到来
- 109   3                  continue;
- 110   3              } else {
- 111   3                  boot_animation_param.time_base_cnt = 0;
- 112   3              }
- 113   2      
- 114   2              // TODO
- 115   2              __boot_animation_phase_0__();
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/05/2026 18:00:04 PAGE 3   
+  52   1          /*
+  53   1              动画阶段：
+  54   1              1. dir == 0，idx 从 0 加到 8 * 2
+  55   1              2. dir 刚从 0 变为 1，idx 为 8 * 2，此时不显示
+  56   1              3. dir == 1，idx 从 8 * 2 减到 0
+  57   1              4. dir == 1，idx == 0，此时不显示
+  58   1          */
+  59   1          if (idx_of_speed_panel == 8 * 2) {
+  60   2              /*
+  61   2                  刚进入时，
+  62   2                  dir 刚从 0 变为 1
+  63   2                  idx_of_speed_panel == 8 * 2，此时不显示
+  64   2                  在这里插入动画时间间隔
+  65   2              */
+  66   2              __aip3368h_display_speed_split_line_light__(8 - 1, 0);
+  67   2      
+  68   2              step_of_speed_panel++;
+  69   2              if (step_of_speed_panel >= 255) {
+  70   3                  step_of_speed_panel = 0;
+  71   3                  idx_of_speed_panel--;
+  72   3              }
+  73   2          } else if (1 == dir_of_speed_panel && idx_of_speed_panel == 0) {
+  74   2              /*
+  75   2                  dir == 1，idx_of_speed_panel == 0
+  76   2                  此时动画临近结束，要熄灭第 0 个指示灯
+  77   2              */
+  78   2              __aip3368h_display_speed_split_line_light__(0, 0);
+  79   2              // boot_animation_param.animation_phase = BOOT_ANIMATION_PHASE_END;
+  80   2          } else {
+  81   2              step_of_speed_panel++;
+  82   2              if (step_of_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT) {
+  83   3                  step_of_speed_panel = 0;
+  84   3                  if (0 == dir_of_speed_panel) {
+  85   4                      // 时速面板上的分割线，7个灯组成流水，不堆积
+  86   4      
+  87   4                      if (idx_of_speed_panel < 8) {
+  88   5                          __aip3368h_display_speed_split_line_light__(idx_of_speed_panel, 1);
+  89   5                      } else {
+  90   5                          __aip3368h_display_speed_split_line_light__(idx_of_speed_panel - 8, 0);
+  91   5                      }
+  92   4      
+  93   4                      idx_of_speed_panel++;
+  94   4                      if (idx_of_speed_panel >= 8 * 2) {
+  95   5                          dir_of_speed_panel = 1;
+  96   5                      }
+  97   4                  } else {
+  98   4                      if (idx_of_speed_panel >= 8) {
+  99   5                          __aip3368h_display_speed_split_line_light__(idx_of_speed_panel - 8, 1);
+ 100   5                      } else {
+ 101   5                          __aip3368h_display_speed_split_line_light__(idx_of_speed_panel, 0);
+ 102   5                      }
+ 103   4      
+ 104   4                      idx_of_speed_panel--;
+ 105   4                  }
+ 106   3              }
+ 107   2          }
+ 108   1      
+ 109   1          if (idx_of_engine_speed_panel == 18 * 2) {
+ 110   2              /*
+ 111   2                  dir 刚从 0 变为 1
+ 112   2                  idx_of_engine_speed_panel == 18 * 2，此时不显示
+ 113   2                  在这里插入动画时间间隔
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 3   
 
+ 114   2              */
+ 115   2              __aip3368h_display_engine_speed_scale_bar__(18 - 1, 0);
  116   2      
- 117   2              aip3368h_module_display(); // 更新显示
-*** WARNING C206 IN LINE 117 OF ..\..\User\boot_animation.c: 'aip3368h_module_display': missing function-prototype
- 118   2          }
- 119   1      }
+ 117   2              step_of_engine_speed_panel++;
+ 118   2              if (step_of_engine_speed_panel >= 255) {
+ 119   3                  step_of_engine_speed_panel = 0;
+ 120   3                  /*
+ 121   3                      油量格数上方的顶部标记，最后一个指示灯的索引值 == 5
+ 122   3                  */
+ 123   3                  idx_of_engine_speed_panel = 5 * 2;
+ 124   3              }
+ 125   2          } else if (1 == dir_of_engine_speed_panel && idx_of_engine_speed_panel == 0) {
+ 126   2              /*
+ 127   2                  dir == 1，idx_of_engine_speed_panel == 0
+ 128   2              */
+ 129   2              __aip3368h_display_fuel_lev_upper_marker__(0, 0);
+ 130   2              boot_animation_param.animation_phase = BOOT_ANIMATION_PHASE_1;
+ 131   2          } else {
+ 132   2              step_of_engine_speed_panel++;
+ 133   2      
+ 134   2              if (0 == dir_of_engine_speed_panel && (step_of_engine_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD
+             -_OF_ENGINE_SPEED_SCALE_BAR)) {
+ 135   3                  step_of_engine_speed_panel = 0;
+ 136   3      
+ 137   3                  // 发动机转速的刻度线，流水动画，不堆积
+ 138   3                  if (idx_of_engine_speed_panel < 18) {
+ 139   4                      __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_panel, 1);
+ 140   4                  } else {
+ 141   4                      __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_panel - 18, 0);
+ 142   4                  }
+ 143   3      
+ 144   3                  idx_of_engine_speed_panel++;
+ 145   3                  if (idx_of_engine_speed_panel >= 18 * 2) {
+ 146   4                      dir_of_engine_speed_panel = 1;
+ 147   4                  }
+ 148   3              } else if (step_of_engine_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_FUEL_UPPER_MARKER) {
+ 149   3                  step_of_engine_speed_panel = 0;
+ 150   3                  if (idx_of_engine_speed_panel >= 6) {
+ 151   4                      __aip3368h_display_fuel_lev_upper_marker__(idx_of_engine_speed_panel - 5, 1);
+ 152   4                  } else {
+ 153   4                      __aip3368h_display_fuel_lev_upper_marker__(idx_of_engine_speed_panel, 0);
+ 154   4                  }
+ 155   3      
+ 156   3                  idx_of_engine_speed_panel--;
+ 157   3              }
+ 158   2          }
+ 159   1      }
+ 160          
+ 161          void __boot_animation_phase_1__(void)
+ 162          {
+ 163   1          // 控制数码管切换显示数字的时间间隔
+ 164   1      #define BOOT_ANIMATION_PHASE_1_PERIOD_OF_NUM 150
+ 165   1          /*
+ 166   1              控制发动机转速挡位的动画时间间隔
+ 167   1          */
+ 168   1      #define BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR (1000 / 27)
+ 169   1          /*
+ 170   1              控制发动机转速刻度线的动画时间间隔
+ 171   1          */
+ 172   1      #define BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_SCALE_BAR (1000 / 18)
+ 173   1      
+ 174   1      /*
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 4   
+
+ 175   1          控制发动机转速挡位的动画时间间隔，只在挡位下降的过程中使用
+ 176   1      */
+ 177   1      #define BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR_DOWN                \
+ 178   1          (1000 / (27 * 3))
+ 179   1      
+ 180   1          static u8 is_initialized = 0;
+ 181   1          static volatile u8 num = 0;
+ 182   1          static volatile u8 step = 0;
+ 183   1      
+ 184   1          static volatile u8 step_of_engine_speed_gear = 0; // 发动机转速挡位对应的动画步骤
+ 185   1          static volatile u8 step_of_engine_speed_scale_bar = 0; // 发动机转速刻度线对应的动画步�
+             -�
+ 186   1          static volatile u8 step_of_exit_phase = 0; // 退出当前动画阶段的步骤
+ 187   1      
+ 188   1          static volatile u8 idx_of_bat_lev = 0;
+ 189   1          static volatile u8 idx_of_scale_bar_light = 0; // 分割线对应的指示灯索引值
+ 190   1          static volatile u8 idx_of_upper_marker = 0;
+ 191   1      
+ 192   1          static volatile u8 idx_of_fuel_lev = 0; // 油量格数对应的指示灯索引值
+ 193   1          static volatile u8 idx_of_engine_speed_gear = 0;
+ 194   1          static volatile u8 idx_of_engine_speed_scale_bar = 0; // 发动机转速刻度线对应的指示灯索
+             -引值
+ 195   1      
+ 196   1          static volatile u8 dir_of_engine_speed_gear = 0; // 发动机转速挡位动画的方向，0：上升�
+             -��1：下降
+ 197   1      
+ 198   1          if (boot_animation_param.animation_phase != BOOT_ANIMATION_PHASE_1) {
+ 199   2              return;
+ 200   2          }
+ 201   1      
+ 202   1          if (0 == is_initialized) {
+ 203   2              is_initialized = 1;
+ 204   2              idx_of_scale_bar_light = 7;
+ 205   2              idx_of_engine_speed_scale_bar = 17;
+ 206   2      
+ 207   2              aip3368h_display_mph_light(1);
+ 208   2              aip3368h_display_kmh_light(1);
+ 209   2              aip3368h_display_trip_light(1);
+ 210   2              aip3368h_display_odo_light(1);
+ 211   2              aip3368h_display_miles_light(1);
+ 212   2              aip3368h_display_km_light(1);
+ 213   2              aip3368h_display_battery_8_symbol_light(1);
+ 214   2              aip3368h_display_battery_icon_light(1);
+ 215   2              aip3368h_display_battery_16_symbol_light(1);
+ 216   2      
+ 217   2              aip3368h_display_left_turn_light(1);
+ 218   2              aip3368h_display_engine_fault_light(1);
+ 219   2              aip3368h_display_n_light(1);
+ 220   2              aip3368h_display_phone_light(1);
+ 221   2              aip3368h_display_high_beam_light(1);
+ 222   2              aip3368h_display_right_turn_light(1);
+ 223   2      
+ 224   2              aip3368h_display_time_colon_light(1);
+ 225   2      
+ 226   2              aip3368h_display_fuel_empty_light(1);
+ 227   2              aip3368h_display_fuel_icon_light(1);
+ 228   2              aip3368h_display_fuel_full_light(1);
+ 229   2      
+ 230   2              aip3368h_display_x1000rpm_light(1);
+ 231   2              aip3368h_display_gear_border(1);
+ 232   2          }
+ 233   1      
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 5   
+
+ 234   1          step++;
+ 235   1          if (step >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_NUM) {
+ 236   2              step = 0;
+ 237   2              aip3368h_display_speed_bit(0, num, 1);
+ 238   2              aip3368h_display_speed_bit(1, num, 1);
+ 239   2              aip3368h_display_speed_bit(2, num, 1);
+ 240   2      
+ 241   2              __aip3368h_display_mileage_bit_x__(0, num, 1);
+ 242   2              __aip3368h_display_mileage_bit_x__(1, num, 1);
+ 243   2              __aip3368h_display_mileage_bit_x__(2, num, 1);
+ 244   2              __aip3368h_display_mileage_bit_x__(3, num, 1);
+ 245   2              __aip3368h_display_mileage_bit_x__(4, num, 1);
+ 246   2              __aip3368h_display_mileage_bit_x__(5, num, 1);
+ 247   2      
+ 248   2              __aip3368h_display_bat_lev_light__(idx_of_bat_lev, 1);
+ 249   2      
+ 250   2              __aip3368h_display_gear_num__(num);
+ 251   2              __aip3368h_display_hour_digit__(0, num);
+ 252   2              __aip3368h_display_hour_digit__(1, num);
+ 253   2              __aip3368h_display_minute_digit__(0, num);
+ 254   2              __aip3368h_display_minute_digit__(1, num);
+ 255   2      
+ 256   2              __aip3368h_display_engine_speed_split_line_light__(idx_of_scale_bar_light, 1);
+ 257   2              __aip3368h_display_speed_split_line_light__(idx_of_scale_bar_light, 1);
+ 258   2      
+ 259   2              __aip3368h_display_fuel_lev_upper_marker__(idx_of_upper_marker, 1);
+ 260   2              __aip3368h_display_bat_lev_upper_marker_light__(idx_of_upper_marker, 1);
+ 261   2      
+ 262   2              __aip3368h_display_fuel_lev__(idx_of_fuel_lev, 1);
+ 263   2      
+ 264   2              if (num < 9) {
+ 265   3                  num++;
+ 266   3              }
+ 267   2      
+ 268   2              if (idx_of_bat_lev < 8) {
+ 269   3      
+ 270   3                  idx_of_bat_lev++;
+ 271   3              }
+ 272   2      
+ 273   2              if (idx_of_scale_bar_light > 0) {
+ 274   3                  idx_of_scale_bar_light--;
+ 275   3              }
+ 276   2      
+ 277   2              if (idx_of_upper_marker < 5) {
+ 278   3                  idx_of_upper_marker++;
+ 279   3              }
+ 280   2      
+ 281   2              if (idx_of_fuel_lev < 5) {
+ 282   3                  idx_of_fuel_lev++;
+ 283   3              }
+ 284   2          }
+ 285   1      
+ 286   1          step_of_engine_speed_gear++;
+ 287   1          if (dir_of_engine_speed_gear == 0 && idx_of_engine_speed_gear == 26) {
+ 288   2              /*
+ 289   2                  发动机转速挡位刚到达上限，保持显示一段时间，再切换方向
+ 290   2              */
+ 291   2              __aip3368h_display_engine_speed_gear__(26, 1);
+ 292   2              if (step_of_engine_speed_gear >= 255) {
+ 293   3                  dir_of_engine_speed_gear = 1;
+ 294   3                  step_of_engine_speed_gear = 0;
+ 295   3              }
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 6   
+
+ 296   2          } else if (0 == dir_of_engine_speed_gear && step_of_engine_speed_gear >= BOOT_ANIMATION_PHASE_1_PERIOD
+             -_OF_ENGINE_SPEED_GEAR) {
+ 297   2              step_of_engine_speed_gear = 0;
+ 298   2      
+ 299   2              __aip3368h_display_engine_speed_gear__(idx_of_engine_speed_gear, 1);
+ 300   2      
+ 301   2              if (idx_of_engine_speed_gear < 26) {
+ 302   3                  idx_of_engine_speed_gear++;
+ 303   3              }
+ 304   2          } else if (dir_of_engine_speed_gear == 1) {
+ 305   2              if (step_of_engine_speed_gear >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR_DOWN) {
+ 306   3                  step_of_engine_speed_gear = 0;
+ 307   3                  __aip3368h_display_engine_speed_gear__(idx_of_engine_speed_gear, 0);
+ 308   3      
+ 309   3                  if (idx_of_engine_speed_gear > 0) {
+ 310   4                      idx_of_engine_speed_gear--;
+ 311   4                  }
+ 312   3              }
+ 313   2          }
+ 314   1      
+ 315   1          step_of_engine_speed_scale_bar++;
+ 316   1          if (step_of_engine_speed_scale_bar >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_SCALE_BAR) {
+ 317   2              step_of_engine_speed_scale_bar = 0;
+ 318   2      
+ 319   2              __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_scale_bar, 1);
+ 320   2      
+ 321   2              if (idx_of_engine_speed_scale_bar > 0) {
+ 322   3                  idx_of_engine_speed_scale_bar--;
+ 323   3              }
+ 324   2          }
+ 325   1      
+ 326   1          // 判断所有子分区的动画是否都结束，再退出该动画阶段
+ 327   1          if (dir_of_engine_speed_gear == 1 && idx_of_engine_speed_gear == 0 &&
+ 328   1              /*  */
+ 329   1              idx_of_engine_speed_scale_bar == 0) {
+ 330   2              step_of_exit_phase++;
+ 331   2              if (step_of_exit_phase >= 255) {
+ 332   3      
+ 333   3                  boot_animation_param.animation_phase = BOOT_ANIMATION_PHASE_END;
+ 334   3              }
+ 335   2          }
+ 336   1      }
+ 337          
+ 338          void boot_animation_process(void)
+ 339          {
+ 340   1          memset(&boot_animation_param, 0x00, sizeof(boot_animation_param_t));
+ 341   1          boot_animation_param.is_in_boot_animation = 1;
+ 342   1      
+ 343   1          while (boot_animation_param.is_in_boot_animation) {
+ 344   2              WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
+ 345   2      
+ 346   2              if (boot_animation_param.time_base_cnt < 1) {
+ 347   3                  // 时间未到来
+ 348   3                  continue;
+ 349   3              } else {
+ 350   3                  boot_animation_param.time_base_cnt = 0;
+ 351   3              }
+ 352   2      
+ 353   2              __boot_animation_phase_0__();
+ 354   2              __boot_animation_phase_1__();
+ 355   2      
+ 356   2              if (BOOT_ANIMATION_PHASE_END == boot_animation_param.animation_phase) {
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/06/2026 18:52:00 PAGE 7   
+
+ 357   3                  // 开机动画结束，根据存储的参数，立即更新显示
+ 358   3      
+ 359   3                  // TODO 可以交给后续的功能来更新显示，不用在这里立即显示
+ 360   3      
+ 361   3                  // TODO 在这里根据存储的参数，立即更新显示
+ 362   3      
+ 363   3                  // aip3368h_display_speed(0);
+ 364   3      
+ 365   3                  // TODO 需要判断存储的参数是 km/h 还是 mph
+ 366   3                  aip3368h_display_mph_light(0);
+ 367   3                  aip3368h_display_kmh_light(0);
+ 368   3      
+ 369   3                  // TODO 需要判断存储的参数是 ODO 还是 TRIP
+ 370   3                  aip3368h_display_trip_light(0);
+ 371   3                  aip3368h_display_odo_light(0);
+ 372   3      
+ 373   3                  // TODO 检测电池电压，根据电压显示电池电量
+ 374   3      
+ 375   3                  boot_animation_param.is_in_boot_animation = 0;
+ 376   3              }
+ 377   2      
+ 378   2              aip3368h_module_display(); // 更新显示
+ 379   2          }
+ 380   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    228    ----
+   CODE SIZE        =   1023    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =     12    ----
+   XDATA SIZE       =     26    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
@@ -146,4 +421,4 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

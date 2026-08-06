@@ -3,6 +3,7 @@
 
 #include "aip3368h_display.h"
 #include "ui.h"
+#include "boot_animation.h"
 
 // 定时器定时周期 (单位:Hz)
 // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1

@@ -27,7 +27,9 @@
 #include "ui.h"
 #include "user_config.h"
 
-#include "boot_animation.h" 
+#include "pin_level_scan.h"
+
+#include "boot_animation.h"
 
 #if USER_DEBUG_ENABLE
 #include "uart0.h"
@@ -50,7 +52,7 @@ void user_init(void)
 #endif
 
 #if PIN_LEVEL_SCAN_ENABLE
-    // pin_level_scan_config();
+    pin_level_scan_config();
 #endif
 
 #if IO_KEY_ENABLE
@@ -95,11 +97,14 @@ void main(void)
 
     ui_manager_init();
 
+    // 上电之后，需要先跑一遍开机动画，再继续主循环
+    // boot_animation_process();
+
 #if 0
 
 
     // USER_TO_DO
-    // 上电之后，需要先跑一遍开机动画，再继续主循环
+    
     aip3368h_display_boot_animation_handle();
     /*
        跑完开机动画之后，再初始化ui
@@ -113,10 +118,6 @@ void main(void)
 
 #endif
 
-    // aip3368h_display_mileage(123456, MILEAGE_DISPLAY_MODE_ODO);
-    // aip3368h_display_mileage(789012, MILEAGE_DISPLAY_MODE_TRIP);
-    boot_animation_process();
-
     /* 系统主循环 */
     while (1) {
         // printf("main circle\n");
@@ -124,11 +125,11 @@ void main(void)
 
         WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
 
-#if 0
-
 #if PIN_LEVEL_SCAN_ENABLE
         pin_level_scan();
 #endif
+
+#if 0
 
 #if IO_KEY_ENABLE
         key_driver_scan(&io_key_para);

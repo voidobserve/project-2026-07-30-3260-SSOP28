@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   ADC                                                               08/05/2026 17:44:06 PAGE 1   
+C51 COMPILER V9.60.7.0   ADC                                                               08/06/2026 18:57:07 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
@@ -62,7 +62,7 @@ line level    source
   50   2                           (0x03 << 3) |         // 关闭测试信号
   51   2                           (0x01 << 0);          // 内部参考电压选择 2.0 V
   52   2              ADC_CHS0 |= ADC_ANALOG_CHAN(0x01); // P01 通路
-C51 COMPILER V9.60.7.0   ADC                                                               08/05/2026 17:44:06 PAGE 2   
+C51 COMPILER V9.60.7.0   ADC                                                               08/06/2026 18:57:07 PAGE 2   
 
   53   2              break;
   54   2      #endif
@@ -126,7 +126,7 @@ line level    source
  112   2          //     ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
  113   2          //     adc_channel_status = ADC_CHANNEL_STATUS_SEL_FUEL_END;
  114   2          //     break;
-C51 COMPILER V9.60.7.0   ADC                                                               08/05/2026 17:44:06 PAGE 3   
+C51 COMPILER V9.60.7.0   ADC                                                               08/06/2026 18:57:07 PAGE 3   
 
  115   2          // case ADC_CHANNEL_STATUS_SEL_FUEL_END:
  116   2          //     adc_channel_set(ADC_CHANNEL_PHOTOSENSITIVE);

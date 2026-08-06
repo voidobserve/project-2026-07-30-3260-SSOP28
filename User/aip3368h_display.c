@@ -1,6 +1,8 @@
 #include "aip3368h_display.h"
 #include "aip3368.h"
 
+#include "instrument.h"
+
 #include "user_config.h"
 
 /**
@@ -230,10 +232,15 @@ static const aip3368h_display_mapping_t bat_lev_map[] = {
  *      1:显示第 1 格指示灯
  *
  */
-void __aip3368h_display_engine_speed_gear__(u8 gear)
+void __aip3368h_display_engine_speed_gear__(u8 idx, u8 is_display)
 {
-    aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[gear].buff_index] |=
-        (0x01 << engine_speed_gear_map[gear].bit_offset);
+    if (is_display) {
+        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx].buff_index] |=
+            (0x01 << engine_speed_gear_map[idx].bit_offset);
+    } else {
+        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx].buff_index] &=
+            ~(0x01 << engine_speed_gear_map[idx].bit_offset);
+    }
 }
 
 /**
@@ -267,7 +274,7 @@ void aip3368h_display_engine_speed_gear(u8 gear)
  * @brief 显示指定的发动机转速对应的刻度条（不会清空原来的显示）
  *
  * @param idx 指示灯索引 0 ~ 17
- * 
+ *
  * @param is_display 是否显示
  *      0：不显示
  *      1：显示
@@ -367,12 +374,39 @@ void __aip3368h_display_gear_seg__(seg_idx_t seg_idx)
 }
 
 /**
+ * @brief 让挡位对应的数码管显示数字
+ *
+ * @param num 0 ~ 9
+ *
+ */
+void __aip3368h_display_gear_num__(u8 num)
+{
+    u8 i;
+    u8 segment_code;
+
+    // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+    segment_code = digit_segment_code[num];
+
+    // 遍历 a ~ g 段数码管
+    for (i = 0; i < 7; i++) {
+        // 检查该段是否需要点亮 (segment_code的对应bit是否为1)
+        if (segment_code & (0x01 << i)) {
+            aip3368h_engine_speed_panel_display_buff[gear_map[i].buff_index] |=
+                (0x01 << gear_map[i].bit_offset);
+        } else {
+            aip3368h_engine_speed_panel_display_buff[gear_map[i].buff_index] &=
+                ~(0x01 << gear_map[i].bit_offset);
+        }
+    }
+}
+
+/**
  * @brief 显示挡位
  *
- * @param gear 挡位 0 ~ 6，
- *          0：空挡，显示"-"
+ * @param gear 挡位 0 ~ 6、GEAR_UNKNOWN
+ *          0：空挡，
  *          1：1挡，显示1
- *
+ *          GEAR_UNKNOWN ： 表示什么挡位都没有
  */
 void aip3368h_display_gear(u8 gear)
 {
@@ -380,13 +414,20 @@ void aip3368h_display_gear(u8 gear)
     u8 i;
     u8 segment_code;
 
+    // 清空数码管的显示
     for (i = 0; i < ARRAY_SIZE(gear_map); i++) {
         aip3368h_engine_speed_panel_display_buff[gear_map[i].buff_index] &=
             ~(0x01 << gear_map[i].bit_offset);
     }
 
-    if (0 == gear) {
-        // 空挡，显示"-"
+    if (GEAR_NEUTRAL == gear) {
+        aip3368h_display_n_light(1);
+    } else {
+        aip3368h_display_n_light(0);
+    }
+
+    if (GEAR_NEUTRAL == gear || GEAR_UNKNOWN == gear) {
+        // 如果什么挡位都没有，或者是检测到了空挡，显示"-"
         __aip3368h_display_gear_seg__(SEG_IDX_G);
     } else {
         // 1 ~ 6 挡，显示对应数字
@@ -520,7 +561,7 @@ void aip3368h_display_right_turn_light(u8 is_display)
 }
 
 /**
- * @brief 显示小时的指定位，不清空原来的显示
+ * @brief 显示小时的指定位
  *
  * @param bit_x 小时的指定位，0：个位，1：十位
  *
@@ -542,6 +583,9 @@ void __aip3368h_display_hour_digit__(u8 bit_x, u8 num)
             if (segment_code & (0x01 << i)) {
                 aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i].buff_index] |=
                     (0x01 << hour_bit_0_map[i].bit_offset);
+            } else {
+                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i].buff_index] &=
+                    ~(0x01 << hour_bit_0_map[i].bit_offset);
             }
         }
     } else {
@@ -552,13 +596,16 @@ void __aip3368h_display_hour_digit__(u8 bit_x, u8 num)
             if (segment_code & (0x01 << i)) {
                 aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i].buff_index] |=
                     (0x01 << hour_bit_1_map[i].bit_offset);
+            } else {
+                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i].buff_index] &=
+                    ~(0x01 << hour_bit_1_map[i].bit_offset);
             }
         }
     }
 }
 
 /**
- * @brief 显示分钟的指定位，不清空原来的显示
+ * @brief 显示分钟的指定位
  *
  * @param bit_x 分钟的指定位，0：个位，1：十位
  *
@@ -580,6 +627,9 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
             if (segment_code & (0x01 << i)) {
                 aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i].buff_index] |=
                     (0x01 << minute_bit_0_map[i].bit_offset);
+            } else {
+                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i].buff_index] &=
+                    ~(0x01 << minute_bit_0_map[i].bit_offset);
             }
         }
     } else {
@@ -590,6 +640,9 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
             if (segment_code & (0x01 << i)) {
                 aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i].buff_index] |=
                     (0x01 << minute_bit_1_map[i].bit_offset);
+            } else {
+                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i].buff_index] &=
+                    ~(0x01 << minute_bit_1_map[i].bit_offset);
             }
         }
     }
@@ -690,38 +743,17 @@ void aip3368h_display_fuel_full_light(u8 is_display)
  *      0：显示第 0 个指示灯
  *      1：显示第 1 个指示灯
  *
- */
-void __aip3368h_display_fuel_lev_upper_marker__(u8 idx)
-{
-    u8 i;
-    // 遍历第 0 ~ ARRAY_SIZE(fuel_lev_upper_marker_map) - 1 个指示灯
-    for (i = 0; i < ARRAY_SIZE(fuel_lev_upper_marker_map); i++) {
-        if (idx == i) {
-            aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[i]
-                                                         .buff_index] |=
-                (0x01 << fuel_lev_upper_marker_map[i].bit_offset);
-        }
-    }
-}
-
-/**
- * @brief 不显示指定的油量格数上方的顶部标记
- *
- * @param idx 0 ~ 5
- *      0：不显示第 0 个指示灯
- *      1：不显示第 1 个指示灯
+ * @param is_display 是否显示
  *
  */
-void __aip3368h_display_fuel_lev_upper_marker_off__(u8 idx)
+void __aip3368h_display_fuel_lev_upper_marker__(u8 idx, u8 is_display)
 {
-    u8 i;
-    // 遍历第 0 ~ ARRAY_SIZE(fuel_lev_upper_marker_map) - 1 个指示灯
-    for (i = 0; i < ARRAY_SIZE(fuel_lev_upper_marker_map); i++) {
-        if (idx == i) {
-            aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[i]
-                                                         .buff_index] &=
-                ~(0x01 << fuel_lev_upper_marker_map[i].bit_offset);
-        }
+    if (is_display) {
+        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx].buff_index] |=
+            (0x01 << fuel_lev_upper_marker_map[idx].bit_offset);
+    } else {
+        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx].buff_index] &=
+            ~(0x01 << fuel_lev_upper_marker_map[idx].bit_offset);
     }
 }
 
@@ -755,6 +787,8 @@ void aip3368h_display_fuel_lev_upper_marker(u8 is_display)
  * @param idx 0 ~ ARRYA_SIZE(fuel_lev_map)
  *      0：第 0 格
  *      1：第 1 格
+ *
+ * @param is_display 是否显示
  *
  */
 void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display)
@@ -1409,12 +1443,12 @@ void aip3368h_display_fuel_lev_upper_marker_test_1ms_isr(void)
     }
 
     if (idx > 0) {
-        __aip3368h_display_fuel_lev_upper_marker_off__(idx - 1);
+        __aip3368h_display_fuel_lev_upper_marker__(idx - 1, 0);
     } else {
-        __aip3368h_display_fuel_lev_upper_marker_off__(ARRAY_SIZE(fuel_lev_upper_marker_map) - 1);
+        __aip3368h_display_fuel_lev_upper_marker__(ARRAY_SIZE(fuel_lev_upper_marker_map) - 1, 0);
     }
 
-    __aip3368h_display_fuel_lev_upper_marker__(idx);
+    __aip3368h_display_fuel_lev_upper_marker__(idx, 1);
 
     idx++;
     if (idx >= ARRAY_SIZE(fuel_lev_upper_marker_map)) {

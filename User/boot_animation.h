@@ -8,13 +8,13 @@
 */
 enum
 {
-    BOOT_ANIMATION_PAHSE_0 = 0x00, 
-    BOOT_ANIMATION_PAHSE_1,             
-    BOOT_ANIMATION_PAHSE_2,             
-    BOOT_ANIMATION_PAHSE_3,             
-    BOOT_ANIMATION_PAHSE_4,             
+    BOOT_ANIMATION_PHASE_0 = 0x00, 
+    BOOT_ANIMATION_PHASE_1,             
+    BOOT_ANIMATION_PHASE_2,             
+    BOOT_ANIMATION_PHASE_3,             
+    BOOT_ANIMATION_PHASE_4,             
 
-    BOOT_ANIMATION_PAHSE_END, // 结束
+    BOOT_ANIMATION_PHASE_END, // 结束
 };
 typedef u8 boot_animation_phase_t;
 

@@ -9,6 +9,7 @@
 enum
 {
     GEAR_NEUTRAL = 0x00, // 空挡
+
     GEAR_FIRST = 0x01,   // 一档
     GEAR_SECOND = 0x02,  // 二档
     GEAR_THIRD = 0x03,   // 三档
@@ -67,8 +68,10 @@ typedef struct
  
     u8 fuel;          // 油量(单位：百分比)
   
-    // 标志位，是否处于低油量报警
+    // 标志位，是否处于低油量提示
     u8 flag_is_in_warning_of_low_fuel;
+    // 标志位，是否处于低电量提示
+
 
     gear_t gear; // 档位
 

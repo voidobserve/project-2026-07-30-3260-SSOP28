@@ -45,7 +45,7 @@ typedef u8 mileage_display_mode_t;
 
 
 
-void __aip3368h_display_engine_speed_gear__(u8 gear);
+void __aip3368h_display_engine_speed_gear__(u8 idx, u8 is_display);
 void aip3368h_display_engine_speed_gear(u8 gear);
 void __aip3368h_display_engine_speed_scale_bar__(u8 idx, u8 is_display);
 void aip3368h_display_engine_speed_scale_bar(u8 scale);
@@ -54,6 +54,7 @@ void aip3368h_display_x1000rpm_light(u8 is_display);
 void aip3368h_display_gear_border(u8 is_display);
 
 void __aip3368h_display_gear_seg__(seg_idx_t seg_idx);
+void __aip3368h_display_gear_num__(u8 num);
 void aip3368h_display_gear(u8 gear);
 
 void __aip3368h_display_engine_speed_split_line_light__(u8 idx, u8 is_display);
@@ -74,7 +75,7 @@ void aip3368h_display_fuel_empty_light(u8 is_display);
 void aip3368h_display_fuel_icon_light(u8 is_display);
 void aip3368h_display_fuel_full_light(u8 is_display);
 
-void __aip3368h_display_fuel_lev_upper_marker__(u8 idx);
+void __aip3368h_display_fuel_lev_upper_marker__(u8 idx, u8 is_display);
 void aip3368h_display_fuel_lev_upper_marker(u8 is_display);
 
 void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display);
