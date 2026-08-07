@@ -19,10 +19,15 @@
 #include "include.h"
 #include <string.h>
 
+#include "adc.h"
 #include "aip3368.h"
 #include "aip3368h_display.h"
+#include "aip1302.h"
 #include "tmr1.h"
 #include "tmr2.h"
+
+#include "key_driver.h"
+#include "io_key.h"
 
 #include "ui.h"
 #include "user_config.h"
@@ -34,6 +39,10 @@
 #if USER_DEBUG_ENABLE
 #include "uart0.h"
 
+/**
+ * @brief 初始化调试引脚，观察引脚电平翻转
+ *
+ */
 void debug_pin_init(void)
 {
     // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
@@ -56,7 +65,7 @@ void user_init(void)
 #endif
 
 #if IO_KEY_ENABLE
-    // io_key_config(); // 按键的配置
+    io_key_config(); // 按键的配置
 #endif
 
 #if SPEED_SCAN_ENABLE
@@ -67,15 +76,17 @@ void user_init(void)
     // engine_speed_scan_config(); // 发动机转速扫描的配置
 #endif
 
-#if (FUEL_CAPACITY_SCAN_ENABLE)
-    // adc_config();
+    aip1302_config(); // 时钟IC
+
+#if (FUEL_CAPACITY_SCAN_ENABLE || BATTERY_SCAN_ENABLE)
+    adc_config();
 #endif
 
     // instrument_info_init(); // 初始化仪表信息
     aip3368h_module_init();
 
     tmr1_config(); //
-    tmr2_config(); // 扫描脉冲(电平变化)的定时器
+    // tmr2_config(); // 扫描脉冲(电平变化)的定时器
 
     delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
 }
@@ -94,7 +105,7 @@ void main(void)
 
     /* 用户代码初始化接口 */
     user_init();
-
+ 
     ui_manager_init();
 
     // 上电之后，需要先跑一遍开机动画，再继续主循环
@@ -125,16 +136,18 @@ void main(void)
 
         WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
 
+        aip1302_test();
+
 #if PIN_LEVEL_SCAN_ENABLE
         pin_level_scan();
 #endif
-
-#if 0
 
 #if IO_KEY_ENABLE
         key_driver_scan(&io_key_para);
         io_key_handle(); // io按键处理函数
 #endif
+
+#if 0
 
 #if SPEED_SCAN_ENABLE
         speed_scan(); // 检测时速
@@ -151,7 +164,7 @@ void main(void)
 
 #endif
 
-        ui_display_handle();
+        // ui_display_handle();
     }
 }
 

@@ -1,6 +1,8 @@
 #include "pin_level_scan.h"
-#include "instrument.h"
 #include "aip3368h_display.h"
+#include "instrument.h"
+
+#include "user_config.h"
 
 #if PIN_LEVEL_SCAN_ENABLE
 void pin_level_scan_config(void)
@@ -13,9 +15,11 @@ void pin_level_scan_config(void)
     P1_PU |= GPIO_P10_PULL_UP(0x01);      // 上拉
     P1_MD0 &= ~(GPIO_P10_MODE_SEL(0x03)); // 输入模式
 
+#if (!USER_DEBUG_ENABLE)
     // 2 档 检测脚：
     P2_PU |= GPIO_P21_PULL_UP(0x01);      // 上拉
     P2_MD0 &= ~(GPIO_P21_MODE_SEL(0x03)); // 输入模式
+#endif
 
     // 3 档 检测脚：
     P1_PU |= GPIO_P13_PULL_UP(0x01);      // 上拉
@@ -70,61 +74,34 @@ void pin_level_scan(void)
         instrument.gear = GEAR_UNKNOWN;
     }
 
+    // 显示挡位
     aip3368h_display_gear(instrument.gear);
 
-#if 0
-    aip3368h_display_gear(instrument.gear);
-    aip3368h_display_gear_light(1);
-
-    if (0 == PIN_DETECT_BREAKDOWN)
-    {
-        aip3368h_display_err_light(1);
-    }
-    else
-    {
-        aip3368h_display_err_light(0);
-    }
-
-    // 引脚检测到高电平，点亮对应的指示灯，不用闪烁
-    if (PIN_DETECT_LFFT_TURN)
-    {
+    // 转向灯
+    if (SIGNAL_VALID_LEV_OF_LEFT_TURN == PIN_DETECT_LEFT_TURN) {
         aip3368h_display_left_turn_light(1);
-    }
-    else
-    {
+    } else {
         aip3368h_display_left_turn_light(0);
     }
 
-    // 引脚检测到高电平，点亮对应的指示灯，不用闪烁
-    if (PIN_DETECT_RIGHT_TURN)
-    {
+    if (SIGNAL_VALID_LEV_OF_RIGHT_TURN == PIN_DETECT_RIGHT_TURN) {
         aip3368h_display_right_turn_light(1);
-    }
-    else
-    {
+    } else {
         aip3368h_display_right_turn_light(0);
     }
 
-    // 引脚检测到高电平，点亮对应的指示灯
-    if (PIN_DETECT_LOW_BEAM)
-    {
-        aip3368h_display_low_beam_indicator_light(1);
-    }
-    else
-    {
-        aip3368h_display_low_beam_indicator_light(0);
+    // 远光灯（大灯）
+    if (SIGNAL_VALID_LEV_OF_HIGH_BEAM == PIN_DETECT_HIGH_BEAM) {
+        aip3368h_display_high_beam_light(1);
+    } else {
+        aip3368h_display_high_beam_light(0);
     }
 
-    // 引脚检测到高电平，点亮对应的指示灯
-    if (PIN_DETECT_HIGH_BEAM)
-    {
-        aip3368h_display_high_beam_indicator_light(1);
+    if (SIGNAL_VALID_LEV_OF_BREAKDOWN == PIN_DETECT_BREAKDOWN) {
+        aip3368h_display_engine_fault_light(1);
+    } else {
+        aip3368h_display_engine_fault_light(0);
     }
-    else
-    {
-        aip3368h_display_high_beam_indicator_light(0);
-    }
-#endif
 }
 
 #endif

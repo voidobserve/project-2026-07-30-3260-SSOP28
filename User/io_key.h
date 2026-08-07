@@ -2,9 +2,9 @@
 #define __IO_KEY_H__
 
 #include "include.h"   // 使用芯片官方提供的头文件
-#include "user_include.h" // 包含自定义的头文件
+#include "user_config.h" 
 
-#define IO_KEY_PIN P05
+#define IO_KEY_PIN P07
 
 #define IO_KEY_SCAN_CIRCLE_TIMES (10)
 #define IO_KEY_FILTER_TIMES (3) // 触摸按键消抖次数

@@ -38,3 +38,9 @@ AlignConsecutiveAssignments: false
 ForEachMacros: []
 StatementMacros: []
 
+# Include 排序与分组配置
+# Preserve: 保持每个 include block 原样，不合并或重新分组
+IncludeBlocks: Preserve
+# 禁用 clang-format 自动排序头文件（若使用旧版也可使用 SortIncludes: false）
+SortIncludes:
+  Enabled: false

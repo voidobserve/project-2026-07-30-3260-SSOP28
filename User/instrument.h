@@ -1,9 +1,7 @@
 #ifndef __INSTRUMENT_H__
 #define __INSTRUMENT_H__
 
-#include "typedef.h" 
-// #include "aip3368h_display.h"
-// #include "user_include.h" // 包含自定义的头文件
+#include "typedef.h"  
 
 // 挡位的定义
 enum
@@ -46,6 +44,7 @@ typedef struct
     u8 is_display_total_mileage;             // 0：显示总里程，1：显示短距离里程
     distance_unit_type_t distance_unit_type; // 要显示的 单位类型，km/h 或 mph
  
+    // TODO 现在不需要保存车轮周长，直接固定
     u8 whell_circumference; // 车轮周长，单位：1 * 10 mm，数值范围：50 ~ 180
 
     u8 is_save_data_valid;

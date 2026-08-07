@@ -1,8 +1,9 @@
 #include <string.h> // memset()
 
 #include "instrument.h"
-#include "user_config.h"
 #include "user_flash.h"
+
+#include "user_config.h"
 
 volatile instrument_t instrument = {0};
 

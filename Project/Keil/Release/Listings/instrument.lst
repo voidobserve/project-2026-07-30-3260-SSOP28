@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/06/2026 18:51:59 PAGE 1   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/07/2026 16:53:20 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE INSTRUMENT
@@ -12,69 +12,70 @@ line level    source
    1          #include <string.h> // memset()
    2          
    3          #include "instrument.h"
-   4          #include "user_config.h"
-   5          #include "user_flash.h"
-   6          
-   7          volatile instrument_t instrument = {0};
-   8          
-   9          void instrument_info_init(void)
-  10          {
-  11   1          save_info_t save_info;
-  12   1          // 从flash中读出数据
-  13   1          flash_read(FLASH_START_ADDR,
-  14   1                     (u8 *)&save_info,
-  15   1                     sizeof(save_info_t));
-  16   1          if (USER_FLASH_DATA_VALID_VAL == save_info.is_save_data_valid)
-  17   1          {
-  18   2              // 如果保存在flash中的数据有效
-  19   2      #if USER_DEBUG_ENABLE
-  20   2          // printf("save data valid\n");
-  21   2      #endif
-  22   2      
-  23   2              // instrument.save_info.total_mileage = save_info.total_mileage;
-  24   2              // instrument.save_info.subtotal_mileage = save_info.subtotal_mileage;
-  25   2              // instrument.save_info.is_display_total_mileage = save_info.is_display_total_mileage;
-  26   2      
-  27   2              memcpy(&instrument.save_info, &save_info, sizeof(save_info_t));
-  28   2          }
-  29   1          else
-  30   1          {
-  31   2              // 如果保存在flash中的数据无效，全局变量 instrument 中的元素 默认全部为0
-  32   2      #if USER_DEBUG_ENABLE
-  33   2          // printf("save data invalid\n");
-  34   2      #endif
-  35   2      
-  36   2              instrument.save_info.is_display_total_mileage = 1;                   // 默认显示大计里程
-  37   2              instrument.save_info.is_save_data_valid = USER_FLASH_DATA_VALID_VAL; // 表示数据有效
-  38   2              instrument.save_info.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC; // 默认使用公制单位
-  39   2              // instrument.save_info.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL;
-  40   2              // 默认车轮周长 105 * 10 mm
-  41   2              instrument.save_info.whell_circumference = 105;
-  42   2      
-  43   2              instrument_info_save(); // 将数据写回flash
-  44   2          }
-  45   1      }
-  46          
-  47          void instrument_info_save(void)
-  48          {
-  49   1      #if USE_INTERNAL_FLASH_SAVE_DATA
-  50   1      
-  51   1          instrument.save_info.is_save_data_valid = USER_FLASH_DATA_VALID_VAL; // 表示数据有效，让下一
+   4          #include "user_flash.h"
+   5          
+   6          #include "user_config.h"
+   7          
+   8          volatile instrument_t instrument = {0};
+   9          
+  10          void instrument_info_init(void)
+  11          {
+  12   1          save_info_t save_info;
+  13   1          // 从flash中读出数据
+  14   1          flash_read(FLASH_START_ADDR,
+  15   1                     (u8 *)&save_info,
+  16   1                     sizeof(save_info_t));
+  17   1          if (USER_FLASH_DATA_VALID_VAL == save_info.is_save_data_valid)
+  18   1          {
+  19   2              // 如果保存在flash中的数据有效
+  20   2      #if USER_DEBUG_ENABLE
+  21   2          // printf("save data valid\n");
+  22   2      #endif
+  23   2      
+  24   2              // instrument.save_info.total_mileage = save_info.total_mileage;
+  25   2              // instrument.save_info.subtotal_mileage = save_info.subtotal_mileage;
+  26   2              // instrument.save_info.is_display_total_mileage = save_info.is_display_total_mileage;
+  27   2      
+  28   2              memcpy(&instrument.save_info, &save_info, sizeof(save_info_t));
+  29   2          }
+  30   1          else
+  31   1          {
+  32   2              // 如果保存在flash中的数据无效，全局变量 instrument 中的元素 默认全部为0
+  33   2      #if USER_DEBUG_ENABLE
+  34   2          // printf("save data invalid\n");
+  35   2      #endif
+  36   2      
+  37   2              instrument.save_info.is_display_total_mileage = 1;                   // 默认显示大计里程
+  38   2              instrument.save_info.is_save_data_valid = USER_FLASH_DATA_VALID_VAL; // 表示数据有效
+  39   2              instrument.save_info.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC; // 默认使用公制单位
+  40   2              // instrument.save_info.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL;
+  41   2              // 默认车轮周长 105 * 10 mm
+  42   2              instrument.save_info.whell_circumference = 105;
+  43   2      
+  44   2              instrument_info_save(); // 将数据写回flash
+  45   2          }
+  46   1      }
+  47          
+  48          void instrument_info_save(void)
+  49          {
+  50   1      #if USE_INTERNAL_FLASH_SAVE_DATA
+  51   1      
+  52   1          instrument.save_info.is_save_data_valid = USER_FLASH_DATA_VALID_VAL; // 表示数据有效，让下一
              -次上电读出数据时，验证该标志位
-  52   1          // 先擦除扇区再写入
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/06/2026 18:51:59 PAGE 2   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/07/2026 16:53:20 PAGE 2   
 
-  53   1          flash_erase_sector(FLASH_START_ADDR);
-  54   1          flash_program(FLASH_START_ADDR,
-  55   1                        (u8 *)&instrument.save_info,
-  56   1                        sizeof(save_info_t));
-  57   1      
-  58   1      #if USER_DEBUG_ENABLE
-  59   1          // printf("instrument info save\n");
-  60   1      #endif
-  61   1      
-  62   1      #endif
-  63   1      }
+  53   1          // 先擦除扇区再写入
+  54   1          flash_erase_sector(FLASH_START_ADDR);
+  55   1          flash_program(FLASH_START_ADDR,
+  56   1                        (u8 *)&instrument.save_info,
+  57   1                        sizeof(save_info_t));
+  58   1      
+  59   1      #if USER_DEBUG_ENABLE
+  60   1          // printf("instrument info save\n");
+  61   1      #endif
+  62   1      
+  63   1      #endif
+  64   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE

@@ -1,4 +1,7 @@
 #include "fuel_capacity.h"
+#include "instrument.h"
+
+#include "user_config.h"
 
 #if FUEL_CAPACITY_SCAN_ENABLE
 

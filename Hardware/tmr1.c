@@ -2,8 +2,14 @@
 #include "include.h"
 
 #include "aip3368h_display.h"
-#include "ui.h"
 #include "boot_animation.h"
+#include "key_driver.h"
+#include "io_key.h"
+#include "ui.h"
+
+#if USER_DEBUG_ENABLE
+#include "aip1302.h" // TEST ONLY 测试完成后，应该删除
+#endif
 
 // 定时器定时周期 (单位:Hz)
 // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
@@ -56,7 +62,16 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
     if (TMR1_CONH & TMR_PRD_PND(0x1)) {
         TMR1_CONH |= TMR_PRD_PND(0x1); // 清除pending
 
+#if USER_DEBUG_ENABLE
+        aip1302_test_1ms_isr();
+#endif
+
+        if (io_key_para.cur_scan_times < 255) {
+            io_key_para.cur_scan_times++;
+        }
+
 #if 0
+        adc_channel_switch_by_isr(); // ADC通道切换
 
         if (mileage_save_time_cnt < 65535)
         {
@@ -68,17 +83,12 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
             mileage_update_time_cnt++;
         }
 
-        if (io_key_para.cur_scan_times < 255)
-        {
-            io_key_para.cur_scan_times++;
-        }
-
 #if FUEL_CAPACITY_SCAN_ENABLE
         fuel_capacity_scan_time_add();
         fuel_lev_update_time_add();
 #endif 
 
-        adc_channel_switch_by_isr();
+        
   
 
         /*
