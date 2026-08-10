@@ -7,7 +7,7 @@
 #if SPEED_SCAN_ENABLE
 // ======================================================
 // 检测时速所需的配置：
-#define SPEED_SCAN_PIN P15 // 检测时速的引脚
+#define SPEED_SCAN_PIN P25 // 检测时速的引脚
 //
 
 /*
@@ -21,9 +21,10 @@
 #define SPEED_SCAN_PULSE_COMPENSATION (1000)
 
 // 车轮的一圈对应多少毫米（仅供计算时使用，并不代表真实的车轮数据）
-// #define SPEED_SCAN_MM_PER_TURN (1070) // 一圈 xx 毫米
-// #define SPEED_SCAN_MM_PER_TURN (1050) // 一圈 xx 毫米
-#define SPEED_SCAN_MM_PER_TURN ((u16)180 * 10) // 一圈 xx 毫米
+// #define SPEED_SCAN_MM_PER_TURN ((u16)105 * 10) // 一圈 xx 毫米
+// #define SPEED_SCAN_MM_PER_TURN ((u16)65 * 10) // 一圈 xx 毫米
+#define SPEED_SCAN_MM_PER_TURN ((u16)60 * 10) // 一圈 xx 毫米
+// #define SPEED_SCAN_MM_PER_TURN ((u16)55 * 10) // 一圈 xx 毫米
 
 /*
     时速扫描的超时时间，单位：ms

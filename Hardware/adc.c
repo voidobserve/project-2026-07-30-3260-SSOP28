@@ -1,5 +1,6 @@
 #include "adc.h"
 #include "fuel_capacity.h"
+#include "battery.h"
 
 volatile u16 adc_val; // adc值，0~4095
 // 控制切换adc通道的状态机：
@@ -130,7 +131,7 @@ void adc_channel_switch_by_isr(void)
 
 void ADC_IRQHandler(void) interrupt ADC_IRQn
 {
-    u16 adc_val; // 由后续赋值
+    volatile u16 adc_val; // 由后续赋值
 
     // 进入中断设置IP，不可删除
     __IRQnIPnPush(ADC_IRQn);
@@ -147,7 +148,7 @@ void ADC_IRQHandler(void) interrupt ADC_IRQn
             break;
 
         case ADC_CHANNEL_STATUS_SEL_BATTERY_END:
-            // TODO
+            bat_adc_val_samples_update(adc_val);
             break;
         }
     }

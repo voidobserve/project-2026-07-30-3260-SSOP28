@@ -1,13 +1,17 @@
 #include "ui.h"
 #include "user_include.h"
+#include "aip3368h_display.h"
+
+// 错误处理函数的调用周期计数值：
+static volatile u16 ui_display_err_time_cnt = 0;
 
 volatile ui_manager_t ui_manager;
 
 void ui_manager_init(void)
 {
-	ui_manager.state = UI_STATE_NORMAL;
+    ui_manager.state = UI_STATE_NORMAL;
 
-	ui_display_refresh();
+    ui_display_refresh();
 }
 
 /**
@@ -18,11 +22,16 @@ void ui_manager_init(void)
  */
 void ui_timer_handle_isr(void)
 {
-	aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
+    aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
+    // 递增 AIP3368H 显示 速度 刷新时间计数
+    aip3368h_display_speed_refresh_time_add();
+
+    if (ui_display_err_time_cnt < ((u16)-1)) {
+        ui_display_err_time_cnt++;
+    }
 
 #if 0
-	// 递增 AIP3368H 显示 速度 刷新时间计数
-	aip3368h_display_speed_refresh_time_add();
+	
 	// 递增 AIP3368H 显示 发动机转速 刷新时间计数
 	aip3368h_display_engine_speed_refresh_time_add();
 	aip3368h_display_err_handle_time_add();
@@ -51,34 +60,60 @@ void ui_timer_handle_isr(void)
 // 设置ui状态（切换ui）
 void ui_set_state(ui_state_t state)
 {
-	ui_manager.state = state;
+    ui_manager.state = state;
 
-	// switch (state)
-	// {
-	// case UI_STATE_NORMAL:
-	// 	// 正常显示
+    // switch (state)
+    // {
+    // case UI_STATE_NORMAL:
+    // 	// 正常显示
 
-	// 	break;
-	// case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
-	// 	// 设置 要显示的单位类型 km/h 或 mph
+    // 	break;
+    // case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
+    // 	// 设置 要显示的单位类型 km/h 或 mph
 
-	// 	break;
-	// case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
-	// 	// 设置 车轮的周长
-	// 	break;
-	// }
+    // 	break;
+    // case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
+    // 	// 设置 车轮的周长
+    // 	break;
+    // }
 
-	// ui_display_refresh();
+    // ui_display_refresh();
+}
+
+void ui_display_err_handle(void)
+{
+    if (ui_display_err_time_cnt < 475) {
+        return;
+    } else {
+        ui_display_err_time_cnt = 0;
+    }
+
+    // 低油量 提示
+    if (instrument.flag_is_in_warning_of_low_fuel) {
+        // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
+        // 让第 0 格油量的指示灯和油量图标指示灯一起闪烁
+
+        if ((aip3368h_engine_speed_panel_display_buff[2] >> 11) & 0x01) {
+            aip3368h_engine_speed_panel_display_buff[1] &=
+                ~(0x01 << 8); // 油量 图标
+            aip3368h_engine_speed_panel_display_buff[2] &=
+                ~(0x01 << 11); // 油量 第 0 格 指示灯
+        } else {
+            aip3368h_engine_speed_panel_display_buff[1] |=
+                (0x01 << 8); // 油量 图标
+            aip3368h_engine_speed_panel_display_buff[2] |=
+                (0x01 << 11); // 油量 第 0 格 指示灯
+        }
+    }
 }
 
 // 显示处理
 void ui_display_handle(void)
 {
-	switch (ui_manager.state)
-	{
-	case UI_STATE_NORMAL:
-		// 正常显示
-		break;
+    switch (ui_manager.state) {
+    case UI_STATE_NORMAL:
+        // 正常显示
+        break;
 
 #if 0
 	case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
@@ -127,38 +162,9 @@ void ui_display_handle(void)
 		}
 
 		break;
-	case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
-		// 设置 车轮的周长
 
-		if (ui_manager.blink_timer_cnt >= UI_SETTING_BLINK_PERIOD)
-		{
-			ui_manager.blink_timer_cnt = 0;
-
-			/*
-				设置范围 ： 50 ~ 180，每次调节步长为5，
-				可以直接判断时速第2位的A段数码管有没有点亮，
-				来控制闪烁
-			*/
-			if ((aip3368h_display_buff[6] >> 1) & 0x01)
-			{
-				// 如果是点亮的，改为熄灭
-				__aip3368h_display_speed_bit_x_clear__(0);
-				__aip3368h_display_speed_bit_x_clear__(1);
-				__aip3368h_display_speed_bit_x_clear__(2);
-			}
-			else
-			{
-				// 如果当前是熄灭的，点亮它
-
-				// 通过调用显示时速的接口来显示对应的数字
-				aip3368h_display_speed(
-					instrument.save_info.whell_circumference);
-			}
-		}
-
-		break;
 #endif
-	}
+    }
 
 #if 0
 
@@ -174,14 +180,18 @@ void ui_display_handle(void)
 	}
 
 
-	aip3368h_display_speed_handle();		// 显示时速
-	aip3368h_display_mileage_handle();		// 显示里程
+	
+
 	aip3368h_display_engine_speed_handle(); // 显示发动机转速
 
 	aip3368h_display_err_handle();
 #endif
 
-	aip3368h_module_display();
+    aip3368h_display_speed_handle();   // 显示时速
+    aip3368h_display_mileage_handle(); // 显示里程
+
+    ui_display_err_handle(); // 显示错误提示（例如低油量提示）
+    aip3368h_module_display();
 }
 
 /**
@@ -192,8 +202,8 @@ void ui_display_handle(void)
  */
 void ui_display_refresh(void)
 {
-	ui_manager.blink_timer_cnt = 0;
-	ui_manager.auto_exit_setting_time_cnt = 0;
+    ui_manager.blink_timer_cnt = 0;
+    ui_manager.auto_exit_setting_time_cnt = 0;
 
 #if 0
 	switch (ui_manager.state)
@@ -211,7 +221,7 @@ void ui_display_refresh(void)
 		break;
 	case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
 		// 设置 车轮的周长
-		aip3368h_display_speed(instrument.save_info.whell_circumference);
+		
 		break;
 	}
 

@@ -6,7 +6,8 @@
 
 #if USE_INTERNAL_FLASH_SAVE_DATA
 
-#define FLASH_START_ADDR (0x00) // 起始地址128byte对齐
+// 起始偏移地址，128byte对齐
+#define FLASH_START_ADDR (0x00)  
 
 #define USER_FLASH_DATA_VALID_VAL ((u8)0xC5)
 

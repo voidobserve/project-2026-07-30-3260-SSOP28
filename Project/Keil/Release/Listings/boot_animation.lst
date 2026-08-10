@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 1   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE BOOT_ANIMATION
@@ -62,7 +62,7 @@ line level    source
   49   1          // printf("step_of_speed_panel == %u\n", (u16)step_of_speed_panel);
   50   1      #endif
   51   1      
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 2   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 2   
 
   52   1          /*
   53   1              动画阶段：
@@ -126,7 +126,7 @@ line level    source
  111   2                  dir 刚从 0 变为 1
  112   2                  idx_of_engine_speed_panel == 18 * 2，此时不显示
  113   2                  在这里插入动画时间间隔
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 3   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 3   
 
  114   2              */
  115   2              __aip3368h_display_engine_speed_scale_bar__(18 - 1, 0);
@@ -190,7 +190,7 @@ line level    source
  172   1      #define BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_SCALE_BAR (1000 / 18)
  173   1      
  174   1      /*
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 4   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 4   
 
  175   1          控制发动机转速挡位的动画时间间隔，只在挡位下降的过程中使用
  176   1      */
@@ -254,7 +254,7 @@ line level    source
  231   2              aip3368h_display_gear_border(1);
  232   2          }
  233   1      
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 5   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 5   
 
  234   1          step++;
  235   1          if (step >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_NUM) {
@@ -318,7 +318,7 @@ line level    source
  293   3                  dir_of_engine_speed_gear = 1;
  294   3                  step_of_engine_speed_gear = 0;
  295   3              }
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 6   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 6   
 
  296   2          } else if (0 == dir_of_engine_speed_gear && step_of_engine_speed_gear >= BOOT_ANIMATION_PHASE_1_PERIOD
              -_OF_ENGINE_SPEED_GEAR) {
@@ -382,7 +382,7 @@ line level    source
  354   2              __boot_animation_phase_1__();
  355   2      
  356   2              if (BOOT_ANIMATION_PHASE_END == boot_animation_param.animation_phase) {
-C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/07/2026 16:53:21 PAGE 7   
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/10/2026 13:53:30 PAGE 7   
 
  357   3                  // 开机动画结束，根据存储的参数，立即更新显示
  358   3      

@@ -2,6 +2,7 @@
 #include "instrument.h"
 
 #include "user_config.h"
+#include "aip3368h_display.h"
 
 #if FUEL_CAPACITY_SCAN_ENABLE
 
@@ -16,18 +17,19 @@ static volatile u8 fuel_capacity_adc_val_sample_index = 0;
 static void __fuel_capacity_adc_val_samples_init__(u16 adc_val)
 {
     u8 i;
-    for (i = 0; i < SAMPLE_COUNT; i++)
-    {
+    for (i = 0; i < SAMPLE_COUNT; i++) {
         fuel_capacity_adc_val_samples[i] = adc_val;
     }
 }
 
-// 将数据放入油量检测的滑动平均数组
+/**
+ * @brief 将数据放入油量检测的滑动平均数组，由adc中断更新
+ * 
+ */
 void fuel_capacity_adc_val_samples_update(u16 adc_val)
 {
     static u8 is_initialized = 0;
-    if (0 == is_initialized)
-    {
+    if (0 == is_initialized) {
         is_initialized = 1;
         __fuel_capacity_adc_val_samples_init__(adc_val);
         return; // 初始化数组之后，直接退出，下一次得到新数据才执行下面的操作
@@ -35,8 +37,7 @@ void fuel_capacity_adc_val_samples_update(u16 adc_val)
 
     fuel_capacity_adc_val_samples[fuel_capacity_adc_val_sample_index] = adc_val;
     fuel_capacity_adc_val_sample_index++;
-    if (fuel_capacity_adc_val_sample_index >= SAMPLE_COUNT)
-    {
+    if (fuel_capacity_adc_val_sample_index >= SAMPLE_COUNT) {
         fuel_capacity_adc_val_sample_index = 0;
     }
 }
@@ -46,8 +47,7 @@ u16 fuel_capacity_adc_val_get(void)
 {
     u8 i;
     u32 sum = 0;
-    for (i = 0; i < SAMPLE_COUNT; i++)
-    {
+    for (i = 0; i < SAMPLE_COUNT; i++) {
         sum += fuel_capacity_adc_val_samples[i];
     }
 
@@ -56,16 +56,14 @@ u16 fuel_capacity_adc_val_get(void)
 
 void fuel_capacity_scan_time_add(void)
 {
-    if (fuel_capacity_scan_time_cnt < ((u16)-1))
-    {
+    if (fuel_capacity_scan_time_cnt < ((u16)-1)) {
         fuel_capacity_scan_time_cnt++;
     }
 }
 
 void fuel_lev_update_time_add(void)
 {
-    if (fuel_lev_update_time_cnt < ((u16)-1))
-    {
+    if (fuel_lev_update_time_cnt < ((u16)-1)) {
         fuel_lev_update_time_cnt++;
     }
 }
@@ -77,8 +75,7 @@ static volatile u8 fuel_voltage_sample_index = 0;
 void __fuel_voltage_samples_init__(u16 voltage)
 {
     u8 i;
-    for (i = 0; i < FUEL_VOLTAGE_SAMPLE_COUNT; i++)
-    {
+    for (i = 0; i < FUEL_VOLTAGE_SAMPLE_COUNT; i++) {
         fuel_voltage_samples[i] = voltage;
     }
 }
@@ -87,8 +84,7 @@ void __fuel_voltage_samples_update__(u16 voltage)
 {
     fuel_voltage_samples[fuel_voltage_sample_index] = voltage;
     fuel_voltage_sample_index++;
-    if (fuel_voltage_sample_index >= FUEL_VOLTAGE_SAMPLE_COUNT)
-    {
+    if (fuel_voltage_sample_index >= FUEL_VOLTAGE_SAMPLE_COUNT) {
         fuel_voltage_sample_index = 0;
     }
 }
@@ -97,8 +93,7 @@ u16 __fuel_voltage_samples_get__(void)
 {
     u8 i;
     u32 sum = 0;
-    for (i = 0; i < FUEL_VOLTAGE_SAMPLE_COUNT; i++)
-    {
+    for (i = 0; i < FUEL_VOLTAGE_SAMPLE_COUNT; i++) {
         sum += fuel_voltage_samples[i];
     }
 
@@ -110,32 +105,19 @@ u16 __fuel_voltage_samples_get__(void)
 u8 fuel_capacity_convert_voltage_to_lev(u16 voltage)
 {
     u8 ret = 0; // 默认油量为0
-    if (voltage >= FUEL_LEVEL_0_VOLTAGE)
-    {
+    if (voltage >= FUEL_LEVEL_0_VOLTAGE) {
         ret = 0;
-    }
-    else if (voltage >= FUEL_LEVEL_1_VOLTAGE)
-    {
+    } else if (voltage >= FUEL_LEVEL_1_VOLTAGE) {
         ret = 1;
-    }
-    else if (voltage >= FUEL_LEVEL_2_VOLTAGE)
-    {
+    } else if (voltage >= FUEL_LEVEL_2_VOLTAGE) {
         ret = 2;
-    }
-    else if (voltage >= FUEL_LEVEL_3_VOLTAGE)
-    {
+    } else if (voltage >= FUEL_LEVEL_3_VOLTAGE) {
         ret = 3;
-    }
-    else if (voltage >= FUEL_LEVEL_4_VOLTAGE)
-    {
+    } else if (voltage >= FUEL_LEVEL_4_VOLTAGE) {
         ret = 4;
-    }
-    else if (voltage >= FUEL_LEVEL_5_VOLTAGE)
-    {
+    } else if (voltage >= FUEL_LEVEL_5_VOLTAGE) {
         ret = 5;
-    }
-    else
-    {
+    } else {
         ret = 6;
     }
 
@@ -153,12 +135,9 @@ void fuel_capacity_scan(void)
 
     u8 fuel_lev_diff = 0;
 
-    if (fuel_capacity_scan_time_cnt >= 200)
-    {
+    if (fuel_capacity_scan_time_cnt >= 200) {
         fuel_capacity_scan_time_cnt = 0;
-    }
-    else
-    {
+    } else {
         // 没有到扫描时间周期，直接返回
         return;
     }
@@ -170,33 +149,26 @@ void fuel_capacity_scan(void)
     // printf("fuel_adc_val == %u\n", fuel_adc_val);
     // printf("fuel_voltage == %u\n", fuel_voltage);
 
-    if (is_initialized == 0)
-    {
+    if (is_initialized == 0) {
         is_initialized = 1;
         __fuel_voltage_samples_init__(fuel_voltage);
         cur_fuel_lev = fuel_capacity_convert_voltage_to_lev(fuel_voltage);
         fuel_lev_of_lag = cur_fuel_lev;
 
-        if (fuel_lev_of_lag == 0)
-        {
+        if (fuel_lev_of_lag == 0) {
             // 打开低油量报警
-            if (instrument.flag_is_in_warning_of_low_fuel == 0)
-            {
+            if (instrument.flag_is_in_warning_of_low_fuel == 0) {
                 // 如果之前没有进入低油量报警
-                // aip3368h_display_fuel_level(0); // 清空油量显示
+                aip3368h_display_fuel_lev(0); // 清空油量显示
                 instrument.flag_is_in_warning_of_low_fuel = 1;
             }
-        }
-        else
-        {
+        } else {
             // 关闭低油量报警
             instrument.flag_is_in_warning_of_low_fuel = 0;
             // 正常显示油量
-            // aip3368h_display_fuel_level(fuel_lev_of_lag);
+            aip3368h_display_fuel_lev(fuel_lev_of_lag);
         }
-    }
-    else
-    {
+    } else {
         __fuel_voltage_samples_update__(fuel_voltage);
 
         // // 测试时使用
@@ -209,16 +181,12 @@ void fuel_capacity_scan(void)
         // }
     }
 
-    cur_fuel_lev = fuel_capacity_convert_voltage_to_lev(
-        __fuel_voltage_samples_get__());
-    if (cur_fuel_lev != fuel_lev_of_lag)
-    {
-        if (cur_fuel_lev > fuel_lev_of_lag)
-        {
+    cur_fuel_lev =
+        fuel_capacity_convert_voltage_to_lev(__fuel_voltage_samples_get__());
+    if (cur_fuel_lev != fuel_lev_of_lag) {
+        if (cur_fuel_lev > fuel_lev_of_lag) {
             fuel_lev_diff = cur_fuel_lev - fuel_lev_of_lag;
-        }
-        else
-        {
+        } else {
             fuel_lev_diff = fuel_lev_of_lag - cur_fuel_lev;
         }
     }
@@ -233,11 +201,9 @@ void fuel_capacity_scan(void)
     // }
     // else
 
-    if ((fuel_lev_diff >= 2 &&
-         fuel_lev_update_time_cnt < FUEL_UPDATE_TIME) ||
+    if ((fuel_lev_diff >= 2 && fuel_lev_update_time_cnt < FUEL_UPDATE_TIME) ||
         (fuel_lev_diff == 1 &&
-         fuel_lev_update_time_cnt < FUEL_UPDATE_TIME_EXTEND))
-    {
+         fuel_lev_update_time_cnt < FUEL_UPDATE_TIME_EXTEND)) {
         // 没有到油量挡位更新时间，直接返回
         return;
     }
@@ -246,37 +212,25 @@ void fuel_capacity_scan(void)
 
     // printf("fuel lev update\n");
 
-    // if (cur_fuel_lev == 0)
-    // {
-
-    // }
-
-    if (fuel_lev_of_lag < cur_fuel_lev)
-    {
+    if (fuel_lev_of_lag < cur_fuel_lev) {
         fuel_lev_of_lag++;
-    }
-    else if (fuel_lev_of_lag > cur_fuel_lev)
-    {
+    } else if (fuel_lev_of_lag > cur_fuel_lev) {
         fuel_lev_of_lag--;
     }
 
-    if (fuel_lev_of_lag == 0)
-    {
+    if (fuel_lev_of_lag == 0) {
         // 打开低油量报警
 
-        if (instrument.flag_is_in_warning_of_low_fuel == 0)
-        {
+        if (instrument.flag_is_in_warning_of_low_fuel == 0) {
             // 如果之前没有进入低油量报警
-            // aip3368h_display_fuel_level(0); // 清空油量显示
+            aip3368h_display_fuel_lev(0); // 清空油量显示
             instrument.flag_is_in_warning_of_low_fuel = 1;
         }
-    }
-    else
-    {
+    } else {
         // 关闭低油量报警
         instrument.flag_is_in_warning_of_low_fuel = 0;
         // 正常显示油量
-        // aip3368h_display_fuel_level(fuel_lev_of_lag);
+        aip3368h_display_fuel_lev(fuel_lev_of_lag);
     }
 }
 

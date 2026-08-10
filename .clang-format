@@ -22,7 +22,7 @@ UseTab: Never
 # 行宽与超长惩罚
 ColumnLimit: 80
 # 每行字符数超过限制时，每超过一个字符，增加的惩罚。0：不进行惩罚
-PenaltyExcessCharacter: 0
+PenaltyExcessCharacter: 100
 # 指针符号对齐
 PointerAlignment: Right
 # 控制语句前是否空格

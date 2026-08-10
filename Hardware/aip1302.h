@@ -4,7 +4,7 @@
 #include "include.h" // 使用芯片官方提供的头文件
 
 #define IC_1302_ENABLE 1
-#define AIP1302_TEST_ENABLE 1 // TEST ONLY
+#define AIP1302_TEST_ENABLE 0 // TEST ONLY
 
 #if IC_1302_ENABLE
 

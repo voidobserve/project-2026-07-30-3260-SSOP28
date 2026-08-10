@@ -20,7 +20,8 @@
 ".\Release\Objects\aip3368h_display.obj",
 ".\Release\Objects\io_key.obj",
 ".\Release\Objects\ui.obj",
-".\Release\Objects\boot_animation.obj" 
+".\Release\Objects\boot_animation.obj",
+".\Release\Objects\battery.obj" 
 TO ".\Release\Objects\Project" 
 PRINT(".\Release\Listings\Project.m51") RAMSIZE(256) 
 CODE( 0X0000-0X3EEF )

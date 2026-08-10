@@ -1,10 +1,13 @@
 #include "tmr1.h"
 #include "include.h"
 
+#include "mileage.h"
 #include "aip3368h_display.h"
 #include "boot_animation.h"
 #include "key_driver.h"
 #include "io_key.h"
+#include "fuel_capacity.h"
+#include "battery.h"
 #include "ui.h"
 
 #if USER_DEBUG_ENABLE
@@ -30,7 +33,8 @@ void tmr1_config(void)
     TMR1_CONL &= ~TMR_PRESCALE_SEL(0x07); // 清除TMR1的预分频配置寄存器
     TMR1_CONL |= TMR_PRESCALE_SEL(0x07);  // 定时器预分频
     TMR1_CONL &= ~TMR_MODE_SEL(0x03);     // 清除TMR1的模式配置寄存器
-    TMR1_CONL |= TMR_MODE_SEL(0x01); // 配置TMR1的模式为计数器模式，最后对系统时钟的脉冲进行计数
+    TMR1_CONL |= TMR_MODE_SEL(
+        0x01); // 配置TMR1的模式为计数器模式，最后对系统时钟的脉冲进行计数
 
     TMR1_CONH &= ~TMR_PRD_PND(0x01); // 清除TMR1的计数标志位，表示未完成计数
     TMR1_CONH |= TMR_PRD_IRQ_EN(1);  // 使能TMR1的计数中断
@@ -62,35 +66,31 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
     if (TMR1_CONH & TMR_PRD_PND(0x1)) {
         TMR1_CONH |= TMR_PRD_PND(0x1); // 清除pending
 
-#if USER_DEBUG_ENABLE
-        aip1302_test_1ms_isr();
-#endif
+        adc_channel_switch_by_isr(); // ADC通道切换
 
         if (io_key_para.cur_scan_times < 255) {
             io_key_para.cur_scan_times++;
         }
 
-#if 0
-        adc_channel_switch_by_isr(); // ADC通道切换
-
-        if (mileage_save_time_cnt < 65535)
-        {
+        if (mileage_save_time_cnt < 65535) {
             mileage_save_time_cnt++;
         }
 
-        if (mileage_update_time_cnt < 65535)
-        {
+        if (mileage_update_time_cnt < 65535) {
             mileage_update_time_cnt++;
         }
 
 #if FUEL_CAPACITY_SCAN_ENABLE
         fuel_capacity_scan_time_add();
         fuel_lev_update_time_add();
-#endif 
+#endif
 
+        bat_scan_time_add();
+        bat_grid_update_time_add();
+
+#if 0
         
-  
-
+ 
         /*
             累计开机动画的时间，控制开机动画处理函数的调用周期
             修改显存的操作放到了主循环，这里仅用作计时

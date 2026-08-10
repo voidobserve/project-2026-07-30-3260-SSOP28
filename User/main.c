@@ -35,6 +35,8 @@
 #include "pin_level_scan.h"
 
 #include "boot_animation.h"
+#include "speed_scan.h"
+#include "battery.h"
 
 #if USER_DEBUG_ENABLE
 #include "uart0.h"
@@ -69,7 +71,7 @@ void user_init(void)
 #endif
 
 #if SPEED_SCAN_ENABLE
-    // speed_scan_config(); // 时速扫描的配置
+    speed_scan_config(); // 时速扫描的配置
 #endif
 
 #if ENGINE_SPEED_SCAN_ENABLE
@@ -82,11 +84,11 @@ void user_init(void)
     adc_config();
 #endif
 
-    // instrument_info_init(); // 初始化仪表信息
+    instrument_info_init(); // 初始化仪表信息
     aip3368h_module_init();
 
     tmr1_config(); //
-    // tmr2_config(); // 扫描脉冲(电平变化)的定时器
+    tmr2_config(); // 扫描脉冲(电平变化)的定时器
 
     delay_ms(10); // 等待系统稳定（主要是等adc采集完成一轮数据）
 }
@@ -105,29 +107,11 @@ void main(void)
 
     /* 用户代码初始化接口 */
     user_init();
- 
+
     ui_manager_init();
 
     // 上电之后，需要先跑一遍开机动画，再继续主循环
     // boot_animation_process();
-
-#if 0
-
-
-    // USER_TO_DO
-    
-    aip3368h_display_boot_animation_handle();
-    /*
-       跑完开机动画之后，再初始化ui
-       初始化ui内部会强制刷新一些显示
-    */
-    ui_manager_init();
-
-    // TEST ONLY
-
-    // aip3368h_display_mileage(123456, 0);
-
-#endif
 
     /* 系统主循环 */
     while (1) {
@@ -135,9 +119,7 @@ void main(void)
         // DEBUG_PIN = ~DEBUG_PIN;
 
         WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
-
-        aip1302_test();
-
+  
 #if PIN_LEVEL_SCAN_ENABLE
         pin_level_scan();
 #endif
@@ -147,24 +129,27 @@ void main(void)
         io_key_handle(); // io按键处理函数
 #endif
 
-#if 0
-
 #if SPEED_SCAN_ENABLE
         speed_scan(); // 检测时速
 #endif
         mileage_scan(); // 检测大计里程和小计里程
 
-#if ENGINE_SPEED_SCAN_ENABLE
-        engine_speed_scan(); // 检测发动机转速
-#endif
-
 #if FUEL_CAPACITY_SCAN_ENABLE
         fuel_capacity_scan(); // 油量检测
 #endif
 
+        bat_scan();
+#if 0
+
+#if ENGINE_SPEED_SCAN_ENABLE
+        engine_speed_scan(); // 检测发动机转速
 #endif
 
-        // ui_display_handle();
+
+
+#endif
+
+        ui_display_handle();
     }
 }
 

@@ -1,6 +1,10 @@
 // 定时器TMR2的驱动源文件
 #include "tmr2.h"
 #include "include.h"
+#include "user_config.h"
+
+#include "speed_scan.h"
+#include "engine_speed_scan.h"
 
 // 定时器定时周期 (单位:Hz)
 // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
@@ -51,7 +55,7 @@ void TIMR2_IRQHandler(void) interrupt TMR2_IRQn
 #endif
 
 #if SPEED_SCAN_ENABLE
-        // speed_scan_timer_50us_isr();
+        speed_scan_timer_50us_isr();
 #endif
     }
 

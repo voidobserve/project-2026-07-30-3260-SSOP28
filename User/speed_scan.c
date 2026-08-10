@@ -1,4 +1,7 @@
 #include "speed_scan.h"
+#include "aip3368h_display.h"
+#include "instrument.h" // 包含仪表的参数
+#include "mileage.h" // 包含里程的参数 distance 
 
 #if SPEED_SCAN_ENABLE
 
@@ -7,7 +10,7 @@ static volatile bit flag_is_speed_scan_over_time = 0; // 速度检测是否一�
 static volatile u32 speed_pulse_cnt = 0;    // 记录脉冲个数，在定时器中断累加
 static volatile u32 speed_scan_time_ms = 0; // 记录扫描时间，在定时器中断累加
 
-static volatile u32 cur_speed_scan_time = 0;  // 当前检测时速所用时间
+static volatile u32 cur_speed_scan_time = 0; // 当前检测时速所用时间
 static volatile u32 cur_speed_scan_pulse = 0; // 当前检测时速所用时间内检测到的脉冲个数
 
 // 计数器，计数满一段时间后，更新显示
@@ -22,8 +25,7 @@ static volatile u8 speed_filter_index = 0;
 void speed_filter_init(u8 speed)
 {
     u8 i;
-    for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++)
-    {
+    for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++) {
         speed_filter_array[i] = speed;
     }
 
@@ -34,8 +36,7 @@ void speed_filter_add(u8 speed)
 {
     speed_filter_array[speed_filter_index] = speed;
     speed_filter_index++;
-    if (speed_filter_index >= SPEED_FILTER_ARRAY_SIZE)
-    {
+    if (speed_filter_index >= SPEED_FILTER_ARRAY_SIZE) {
         speed_filter_index = 0;
     }
 }
@@ -53,17 +54,14 @@ u8 speed_filter_get_speed(void)
     // }
     // printf("\n===================\n");
 
-    for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++)
-    {
+    for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++) {
         sum += speed_filter_array[i];
 
-        if (max_speed < speed_filter_array[i])
-        {
+        if (max_speed < speed_filter_array[i]) {
             max_speed = speed_filter_array[i];
         }
 
-        if (min_speed > speed_filter_array[i])
-        {
+        if (min_speed > speed_filter_array[i]) {
             min_speed = speed_filter_array[i];
         }
     }
@@ -77,11 +75,15 @@ u8 speed_filter_get_speed(void)
 void speed_scan_config(void)
 {
     // 使用定时器扫描IO电平变化来计算脉冲
-    P1_MD1 &= ~GPIO_P15_MODE_SEL(0x3); // 输入模式
-    P1_PU |= GPIO_P15_PULL_UP(0x1);    // 配置为上拉
+    P2_PU |= GPIO_P25_PULL_UP(0x1);    // 配置为上拉
+    P2_MD1 &= ~GPIO_P25_MODE_SEL(0x3); // 输入模式
 }
 
-void speed_scan_update_data(void) // 更新检测时速的数据
+/**
+ * @brief 更新检测时速的数据，由定时中断调用
+ *
+ */
+void speed_scan_update_data(void) //
 {
     cur_speed_scan_time += speed_scan_time_ms;
     speed_scan_time_ms = 0;
@@ -100,9 +102,7 @@ void speed_scan_timer_50us_isr(void)
         // 更新扫描时间（如果一直没有脉冲到来给它清零，这里会一直累加）
         speed_scan_time_ms++;
 
-        if (speed_scan_time_ms >= SPEED_SCAN_OVER_TIME &&
-            flag_is_speed_scan_over_time == 0)
-        {
+        if (speed_scan_time_ms >= SPEED_SCAN_OVER_TIME && flag_is_speed_scan_over_time == 0) {
             speed_scan_time_ms = 0;
             flag_is_speed_scan_over_time = 1; // 说明超时，脉冲计数一直没有加一
         }
@@ -110,16 +110,13 @@ void speed_scan_timer_50us_isr(void)
 
     if (SPEED_SCAN_PIN) // 检测时速的引脚
     {
-        if (0 == last_speed_scan_level)
-        {
+        if (0 == last_speed_scan_level) {
             speed_pulse_cnt++;
             speed_scan_update_data();
         }
 
         last_speed_scan_level = 1;
-    }
-    else
-    {
+    } else {
         // 如果现在检测到低电平
         last_speed_scan_level = 0;
     }
@@ -130,37 +127,25 @@ void speed_scan(void)
     volatile u32 cur_speed = 0;
     volatile u32 tmp = 0;
 
-    if (cur_speed_scan_time >= SPEED_SCAN_UPDATE_TIME || flag_is_speed_scan_over_time)
-    {
+    if (cur_speed_scan_time >= SPEED_SCAN_UPDATE_TIME || flag_is_speed_scan_over_time) {
         /*
             采集到的脉冲个数 / 一圈对应的脉冲个数 * 车轮一圈对应走过的距离（单位：mm），
             计算得到 采集的脉冲个数对应走过的距离（单位：mm）
         */
-        // tmp = ((cur_speed_scan_pulse * SPEED_SCAN_MM_PER_TURN) *
-        //        SPEED_SCAN_PULSE_COMPENSATION /
-        //        SPEED_SCAN_PULSE_PER_TURN);
-
-        tmp = (((u32)cur_speed_scan_pulse *
-                instrument.save_info.whell_circumference * 10) *
-               SPEED_SCAN_PULSE_COMPENSATION /
-               SPEED_SCAN_PULSE_PER_TURN);
+        tmp = ((cur_speed_scan_pulse * SPEED_SCAN_MM_PER_TURN) * SPEED_SCAN_PULSE_COMPENSATION / SPEED_SCAN_PULSE_PER_TURN);
 
         // printf("cur_speed_scan_pulse %lu\n", cur_speed_scan_pulse);
 
         if (flag_is_speed_scan_over_time) // 超时，采集到的脉冲个数对应一直是0km/h，认为时速是0
         {
             // printf("scan over time\n");
-            if (cur_speed_scan_pulse != 0)
-            {
+            if (cur_speed_scan_pulse != 0) {
                 // 如果采集的脉冲个数不为0
                 cur_speed = 1;
-            }
-            else
-            {
+            } else {
                 cur_speed = 0;
             }
-        }
-        else // 未超时，计算采集到的脉冲个数对应走过的距离，再转换成以 km/h 的单位
+        } else // 未超时，计算采集到的脉冲个数对应走过的距离，再转换成以 km/h 的单位
         {
             /*
                 采集的脉冲个数对应走过的距离（单位：mm）/ 采集所用的时间（单位：ms） == 速度（单位：mm/ms）
@@ -190,14 +175,12 @@ void speed_scan(void)
         cur_speed_scan_time = 0;
         flag_is_speed_scan_over_time = 0;
 
-        if (cur_speed > 0)
-        {
+        if (cur_speed > 0) {
             cur_speed = (u32)cur_speed * 102 / 100;
         }
 
         // 限制要发送的时速:
-        if (cur_speed > 199)
-        {
+        if (cur_speed > 199) {
             cur_speed = 199;
         }
 
@@ -205,7 +188,6 @@ void speed_scan(void)
     }
 }
 
-#if 0
 /**
  * @brief 递增AIP3368H显示速度刷新时间计数
  *
@@ -213,19 +195,19 @@ void speed_scan(void)
 void aip3368h_display_speed_refresh_time_add(void)
 {
     if (!(UI_STATE_NORMAL == ui_manager.state ||
-          UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state))
-    {
+          UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state)) {
         // 不在 正常界面 ，或者不在 设置 要显示的单位类型界面，直接返回
         aip3368h_display_speed_refresh_time_cnt = 0;
         return;
     }
 
-    if (aip3368h_display_speed_refresh_time_cnt < ((u8)-1)) // 防止计数溢出
-    {
+    // 防止计数溢出
+    if (aip3368h_display_speed_refresh_time_cnt < ((u8)-1)) {
         aip3368h_display_speed_refresh_time_cnt++;
     }
 }
 
+#if 1
 /**
  * @brief 根据单位类型（公制 或 英制）来显示时速
  *
@@ -233,15 +215,10 @@ void aip3368h_display_speed_refresh_time_add(void)
  */
 void aip3368h_display_speed_by_unit_type(u8 speed)
 {
-    if (DISTANCE_UNIT_TYPE_METRIC ==
-        instrument.save_info.distance_unit_type)
-    {
+    if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
         // 显示时速
         aip3368h_display_speed(speed);
-    }
-    else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
-             instrument.save_info.distance_unit_type)
-    {
+    } else if (DISTANCE_UNIT_TYPE_IMPERIAL == instrument.save_info.distance_unit_type) {
         // 1km/h == 0.621427mile/h
         // 显示时速
         aip3368h_display_speed((u32)speed * 621 / 1000);
@@ -254,22 +231,23 @@ void aip3368h_display_speed_handle(void)
     // static volatile u8 speed_of_lag = 0;   // 延迟显示的时速
     volatile u8 cur_speed; //
 
-    // α越小越平滑但响应慢,α越大响应快但平滑差
-#define ALPHA 7 // 滤波系数，范围：0 ~ 10，推荐值 1 ~ 3
+    /*
+        一阶低通滤波器配置，滤波系数 α ，范围：0 ~ 10，推荐值 1 ~ 3
+        α越小越平滑但响应慢,α越大响应快但平滑差
+    */
+#define ALPHA 7 // 滤波系数 α
     static volatile u8 filtered_speed;
     u8 base_step;
     u8 speed_abs_diff;
 
     if (!(UI_STATE_NORMAL == ui_manager.state ||
-          UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state))
-    {
+          UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state)) {
         // 不在 正常界面 ，或者不在 设置 要显示的单位类型界面，直接返回
         is_initialized = 0; //
         return;
     }
 
-    if (0 == is_initialized)
-    {
+    if (0 == is_initialized) {
         is_initialized = 1;
 
         instrument.speed_of_lag = instrument.speed; // 初始化，直接获取当前最新的速度值
@@ -277,33 +255,31 @@ void aip3368h_display_speed_handle(void)
         aip3368h_display_speed_by_unit_type(instrument.speed_of_lag);
         speed_filter_init(instrument.speed);
 
-        // USER_TO_DO 测试时屏蔽，实际需要恢复
-        aip3368h_display_speed_unit_type(
-            instrument.save_info.distance_unit_type);
+        if (instrument.save_info.distance_unit_type == DISTANCE_UNIT_TYPE_METRIC) {
+            // 公制单位： km/h
+            aip3368h_display_mph_light(0);
+            aip3368h_display_kmh_light(1);
+        } else {
+            // 英制单位： mile/h
+            aip3368h_display_kmh_light(0);
+            aip3368h_display_mph_light(1);
+        }
     }
 
 #if 1
-    if (aip3368h_display_speed_refresh_time_cnt >= AIP3368H_DISPLAY_SPEED_REFRESH_TIME)
-    {
+    if (aip3368h_display_speed_refresh_time_cnt >= AIP3368H_DISPLAY_SPEED_REFRESH_TIME) {
         aip3368h_display_speed_refresh_time_cnt = 0;
 
         // 如果当前显示的速度值和计算出来的速度值相差太大，需要进行快速逼近：
-        if (instrument.speed_of_lag > instrument.speed)
-        {
+        if (instrument.speed_of_lag > instrument.speed) {
             speed_abs_diff = instrument.speed_of_lag - instrument.speed;
-            if (speed_abs_diff >= 10)
-            {
+            if (speed_abs_diff >= 10) {
                 // 根据速度插值，调节步长
-                if (speed_abs_diff >= 50)
-                {
+                if (speed_abs_diff >= 50) {
                     base_step = 20;
-                }
-                else if (speed_abs_diff >= 20)
-                {
+                } else if (speed_abs_diff >= 20) {
                     base_step = 10;
-                }
-                else
-                {
+                } else {
                     base_step = 5;
                 }
 
@@ -317,23 +293,15 @@ void aip3368h_display_speed_handle(void)
                 aip3368h_display_speed_by_unit_type(instrument.speed_of_lag);
                 return;
             }
-        }
-        else if (instrument.speed_of_lag < instrument.speed)
-        {
+        } else if (instrument.speed_of_lag < instrument.speed) {
             speed_abs_diff = instrument.speed - instrument.speed_of_lag;
-            if (speed_abs_diff >= 10)
-            {
+            if (speed_abs_diff >= 10) {
                 // 根据速度插值，调节步长
-                if (speed_abs_diff >= 50)
-                {
+                if (speed_abs_diff >= 50) {
                     base_step = 20;
-                }
-                else if (speed_abs_diff >= 20)
-                {
+                } else if (speed_abs_diff >= 20) {
                     base_step = 10;
-                }
-                else
-                {
+                } else {
                     base_step = 5;
                 }
 
@@ -356,24 +324,18 @@ void aip3368h_display_speed_handle(void)
             如果当前速度值和过滤后的速度值都是10以下，需要注意
             不能再经过低通滤波器，会导致最后计算出的时速变为0
         */
-        if (cur_speed < 10)
-        {
+        if (cur_speed < 10) {
             filtered_speed = cur_speed;
-        }
-        else
-        {
+        } else {
             // 套用一阶低通滤波器计算公式：
             filtered_speed = ((u16)ALPHA * cur_speed + ((u16)10 - ALPHA) * filtered_speed) / 10;
         }
 
         cur_speed = filtered_speed;
 
-        if (instrument.speed_of_lag > cur_speed)
-        {
+        if (instrument.speed_of_lag > cur_speed) {
             instrument.speed_of_lag--;
-        }
-        else if (instrument.speed_of_lag < cur_speed)
-        {
+        } else if (instrument.speed_of_lag < cur_speed) {
             instrument.speed_of_lag++;
         }
 

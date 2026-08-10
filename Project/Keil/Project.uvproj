@@ -511,6 +511,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\User\boot_animation.c</FilePath>
             </File>
+            <File>
+              <FileName>battery.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\User\battery.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

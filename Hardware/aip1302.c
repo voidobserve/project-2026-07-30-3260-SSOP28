@@ -324,8 +324,8 @@ static u8 aip1302_is_working(void)
     aip1302_read_all(); //
     if (aip1302_info.year > 2099 || aip1302_info.year < 2000 || aip1302_info.month > 12 ||
         aip1302_info.month < 1 || aip1302_info.day > 31 || aip1302_info.day < 1 ||
-        aip1302_info.time_hour > 24 || aip1302_info.time_min > 60 ||
-        aip1302_info.time_sec > 60 || aip1302_info.year == 2000 /* 2000年，也认为是第一次上电 */
+        aip1302_info.time_hour >= 24 || aip1302_info.time_min >= 60 ||
+        aip1302_info.time_sec >= 60 || aip1302_info.year == 2000 /* 2000年，也认为是第一次上电 */
     ) {
         return 0; // 第一次上电
     } else {

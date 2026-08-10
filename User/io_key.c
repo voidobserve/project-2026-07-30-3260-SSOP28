@@ -102,6 +102,11 @@ void io_key_handle(void)
         // printf("click\n");
 #endif
 
+        if (UI_STATE_NORMAL == ui_manager.state) {
+            // 正常显示模式下，按键单击切换显示的里程类型
+            // TODO
+        }
+
 #if 0
 		if (UI_STATE_NORMAL == ui_manager.state)
 		{
@@ -132,12 +137,7 @@ void io_key_handle(void)
 				 ui_manager.state)
 		{
 			// 如果正在设置车轮周长
-
-			instrument.save_info.whell_circumference += 5;
-			if (instrument.save_info.whell_circumference > 180)
-			{
-				instrument.save_info.whell_circumference = 50;
-			} 
+ 
 		}
 #endif
 

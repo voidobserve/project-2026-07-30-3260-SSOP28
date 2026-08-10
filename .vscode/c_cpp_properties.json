@@ -4,13 +4,13 @@
             "name": "Target 1",
             "includePath": [
                 "C:/Keil_v5/C51/INC", /* C 标准库 头文件 */
-               "${workspaceFolder}/",
-               "${workspaceFolder}/Hardware",
-               "${workspaceFolder}/Libraries/include",
-               "${workspaceFolder}/Libraries/Include",
-               "${workspaceFolder}/User/lib",
-               "${workspaceFolder}/User/",
-               "${workspaceFolder}/**" // 搜索工程目录下的所有头文件
+                "${workspaceFolder}/",
+                "${workspaceFolder}/Hardware",
+                "${workspaceFolder}/Libraries/include",
+                "${workspaceFolder}/Libraries/Include",
+                "${workspaceFolder}/User/lib",
+                "${workspaceFolder}/User/",
+                "${workspaceFolder}/**" // 搜索工程目录下的所有头文件
             ],
             "defines": [
                 "__C51__",
@@ -39,7 +39,5 @@
             "intelliSenseMode": "${default}"
         }
     ],
-
-    
     "version": 4
 }

@@ -42,10 +42,9 @@ typedef struct
     u32 subtotal_mileage;
 
     u8 is_display_total_mileage;             // 0：显示总里程，1：显示短距离里程
-    distance_unit_type_t distance_unit_type; // 要显示的 单位类型，km/h 或 mph
+    // 要显示的 单位类型，km/h 或 mph。在时速和里程中用到
+    distance_unit_type_t distance_unit_type; 
  
-    // TODO 现在不需要保存车轮周长，直接固定
-    u8 whell_circumference; // 车轮周长，单位：1 * 10 mm，数值范围：50 ~ 180
 
     u8 is_save_data_valid;
 } save_info_t;

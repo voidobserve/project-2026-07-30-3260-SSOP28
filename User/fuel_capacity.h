@@ -10,9 +10,9 @@
 #define FUEL_VOLTAGE_TO_ADC_VAL(voltage) ((u16)((u32)(voltage) * 4096 / 2 / 1000))
 
 // 满油量对应的电压
-#define FUEL_FULL_VOLTAGE (220)
+#define FUEL_FULL_VOLTAGE (290)
 // 没有油量对应的电压
-#define FUEL_EMPTY_VOLTAGE (1450)
+#define FUEL_EMPTY_VOLTAGE (1200)
 // 油量挡位
 #define FUEL_LEVEL_MAX (6)
 // 线性划分的各个油量挡位对应的电压值：
@@ -41,9 +41,9 @@ enum
 
 // 每次计算油量的时间周期，单位：ms
 #define FUEL_SCAN_TIME ((u16)100)
-// 更新油量的时间，单位：ms
+// 显示时，更新油量的时间，单位：ms
 #define FUEL_UPDATE_TIME ((u16)5000)
-// 如果油量格数很接近，需要延长油量更新时间
+// 显示时，如果油量格数很接近，需要延长油量更新时间
 #define FUEL_UPDATE_TIME_EXTEND ((u16)20000)
 
 // 油量检测配置

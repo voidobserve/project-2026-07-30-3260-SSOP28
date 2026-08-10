@@ -29,22 +29,52 @@
 		 4096 +                                                        \
 	 (200 - 100))
 
+
+// TODO 
+// 电池电压，满格子数时，对应的电压
+#define BAT_VOLTAGE_OF_FULL_GRID ((u16))
+// 电池电压，低电量提示时，对应的电压
+#define BAT_VOLTAGE_OF_LOW_GRID ((u16))
+// 电池电压的总格子数（一共有9格，则填9）
+#define BAT_VOLTAGE_GRID_NUM ((u8)9)
+// 线性划分，各个电池电压格子对应的电压值：
+// enum
+// {
+// 	// BAT_LEV_GRID_0 = BAT_VOLTAGE_OF_LOW_GRID,
+// };
+
+
+
+
+
+
 // 低电压报警阈值，单位：mV
 #define BAT_LOW_VOLTAGE_WARNING_THRESHOLD ((u16)10 * 1000)
 // 取消低电压报警阈值，单位：mV
 #define BAT_CANCEL_LOW_VOLTAGE_WARNING_THRESHOLD ((u16)10300)
 
 
-// 电池电压扫描周期，单位：ms
-#define BAT_SCAN_PERIOD 200
-
-extern volatile u16 battery_scan_time_cnt; // 电池扫描时间计时
-
+/*
+	电池电压扫描周期，单位：ms
+	每次计算电池电压的时间周期
+*/ 
+#define BAT_SCAN_PERIOD 100
+// 显示时，更新电池电压的周期，单位：ms
+#define BAT_DISPLAY_UPDATE_PERIOD ((u16)3000)
+// 显示时，如果电池电压比较接近，更新电池电压的周期，单位：ms
+#define BAT_DISPLAY_UPDATE_PERIOD_WHEN_BAT_CLOSE ((u16)10000)
+  
 void bat_adc_val_samples_update(u16 adc_val);
-// u16 bat_adc_val_get(void);
+u16 bat_adc_val_get_avg(void);
+
+void bat_vol_samples_init(u16 voltage);
+void bat_vol_samples_update(u16 voltage);
+u16 bat_vol_get_avg(void);
 
 void bat_scan_time_add(void);
-void battery_scan(void);
+void bat_grid_update_time_add(void);
+
+void bat_scan(void);
 
 #endif // BATTERY_SCAN_ENABLE
 #endif

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/07/2026 16:53:20 PAGE 1   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE IO_KEY
@@ -62,7 +62,7 @@ line level    source
   49   1      }
   50          
   51          u8 io_key_get_key_id(void)
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/07/2026 16:53:20 PAGE 2   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 2   
 
   52          {
   53   1          if (IO_KEY_PIN == 0) {
@@ -117,17 +117,22 @@ line level    source
  102   2              // printf("click\n");
  103   2      #endif
  104   2      
- 105   2      #if 0
+ 105   2              if (UI_STATE_NORMAL == ui_manager.state) {
+ 106   3                  // 正常显示模式下，按键单击切换显示的里程类型
+ 107   3                  // TODO
+ 108   3              }
+ 109   2      
+ 110   2      #if 0
                               if (UI_STATE_NORMAL == ui_manager.state)
                               {
                                       instrument.save_info.is_display_total_mileage =
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 3   
+
                                               !instrument.save_info.is_display_total_mileage;
                                       
                                       instrument_info_save();
                               }
                               else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE ==
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/07/2026 16:53:20 PAGE 3   
-
                                                ui_manager.state)
                               {
                                       // 如果正在设置当前要显示的单位类型，km/h 或 mph
@@ -149,12 +154,7 @@ line level    source
                                                ui_manager.state)
                               {
                                       // 如果正在设置车轮周长
-              
-                                      instrument.save_info.whell_circumference += 5;
-                                      if (instrument.save_info.whell_circumference > 180)
-                                      {
-                                              instrument.save_info.whell_circumference = 50;
-                                      } 
+               
                               }
               #endif
  143   2      
@@ -190,7 +190,7 @@ line level    source
                                       ui_manager.state = UI_STATE_SETTING_WHEEL_CIRCUMFERENCE; 
                                       instrument_info_save(); // 退出单位类型设置后，保存
                               }
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/07/2026 16:53:20 PAGE 4   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 4   
 
                               else if (UI_STATE_SETTING_WHEEL_CIRCUMFERENCE ==
                                                ui_manager.state)
@@ -214,7 +214,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    133    ----
+   CODE SIZE        =    140    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =     24    ----
    PDATA SIZE       =   ----    ----
