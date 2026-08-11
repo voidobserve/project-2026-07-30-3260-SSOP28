@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 1   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE IO_KEY
@@ -10,127 +10,135 @@ COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\io_key.c LARGE OPTIMI
 line level    source
 
    1          #include "io_key.h"
-   2          #include "key_driver.h"
-   3          #include "ui.h"
+   2          
+   3          #include "user_config.h"
    4          
-   5          #include "user_config.h"
-   6          
-   7          #if IO_KEY_ENABLE
-   8          
-   9          extern u8 io_key_get_key_id(void);
-  10          // volatile key_driver_para_t ad_key_para = {
-  11          volatile struct key_driver_para io_key_para = {
-  12              // 编译器不支持指定成员赋值的写法，会报错
-  13              IO_KEY_SCAN_CIRCLE_TIMES,
-  14              0,
-  15              // NO_KEY,
-  16              0,
-  17          
-  18              0,
+   5          #include "key_driver.h"
+   6          #include "ui.h"
+   7          #include "instrument.h"
+   8          #include "mileage.h"
+   9          
+  10          #if IO_KEY_ENABLE
+  11          
+  12          extern u8 io_key_get_key_id(void);
+  13          // volatile key_driver_para_t ad_key_para = {
+  14          volatile struct key_driver_para io_key_para = {
+  15              // 编译器不支持指定成员赋值的写法，会报错
+  16              IO_KEY_SCAN_CIRCLE_TIMES,
+  17              0,
+  18              // NO_KEY,
   19              0,
-  20              3,
-  21          
-  22              IO_KEY_LONG_PRESS_TIME_THRESHOLD_MS / IO_KEY_SCAN_CIRCLE_TIMES,
-  23              (IO_KEY_LONG_PRESS_TIME_THRESHOLD_MS + IO_KEY_HOLD_PRESS_TIME_THRESHOLD_MS) / IO_KEY_SCAN_CIRCLE_TIMES
-             -,
-  24              0,
-  25          
-  26              0,
-  27              0,
-  28              // 200 / IO_KEY_SCAN_CIRCLE_TIMES,
+  20          
+  21              0,
+  22              0,
+  23              3,
+  24          
+  25              IO_KEY_LONG_PRESS_TIME_THRESHOLD_MS / IO_KEY_SCAN_CIRCLE_TIMES,
+  26              (IO_KEY_LONG_PRESS_TIME_THRESHOLD_MS +
+  27               IO_KEY_HOLD_PRESS_TIME_THRESHOLD_MS) /
+  28                  IO_KEY_SCAN_CIRCLE_TIMES,
   29              0,
-  30              // NO_KEY,
+  30          
   31              0,
-  32              KEY_TYPE_TOUCH, // 触摸按键，实际上是检测触摸ic传递过来的电平信号，可以当作
+  32              0,
+  33              // 200 / IO_KEY_SCAN_CIRCLE_TIMES,
+  34              0,
+  35              // NO_KEY,
+  36              0,
+  37              KEY_TYPE_TOUCH, // 触摸按键，实际上是检测触摸ic传递过来的电平信号，可以当作
              -io来检测
-  33              io_key_get_key_id,
-  34          
-  35              IO_KEY_ID_NONE,
-  36              KEY_EVENT_NONE,
-  37          };
-  38          
-  39          #define IO_KEY_EFFECT_EVENT_NUMS 4
-  40          static const u8 io_key_event_table[][IO_KEY_EFFECT_EVENT_NUMS + 1] = {
-  41              IO_KEY_ID_VALID,   IO_KEY_EVENT_CLICK, IO_KEY_EVENT_LONG,
-  42              IO_KEY_EVENT_HOLD, IO_KEY_EVENT_LOOSE,
-  43          };
-  44          
-  45          void io_key_config(void)
-  46          {
-  47   1          // P0_PU |= GPIO_P07_PULL_UP(0x01);      // 上拉
-  48   1          P0_MD1 &= ~(GPIO_P07_MODE_SEL(0x03)); // 输入模式
-  49   1      }
-  50          
-  51          u8 io_key_get_key_id(void)
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 2   
+  38              io_key_get_key_id,
+  39          
+  40              IO_KEY_ID_NONE,
+  41              KEY_EVENT_NONE,
+  42          };
+  43          
+  44          #define IO_KEY_EFFECT_EVENT_NUMS 4
+  45          static const u8 io_key_event_table[][IO_KEY_EFFECT_EVENT_NUMS + 1] = {
+  46              IO_KEY_ID_VALID,   IO_KEY_EVENT_CLICK, IO_KEY_EVENT_LONG,
+  47              IO_KEY_EVENT_HOLD, IO_KEY_EVENT_LOOSE,
+  48          };
+  49          
+  50          void io_key_config(void)
+  51          {
+  52   1          // P0_PU |= GPIO_P07_PULL_UP(0x01);      // 上拉
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 2   
 
-  52          {
-  53   1          if (IO_KEY_PIN == 0) {
-  54   2              // 引脚配置为输入上拉，低电平表示按键按下
-  55   2              return IO_KEY_ID_VALID;
-  56   2          }
-  57   1      
-  58   1          return NO_KEY;
-  59   1      }
-  60          
-  61          u8 __io_key_get_event__(u8 key_val, u8 key_event)
-  62          {
-  63   1          u8 ret_key_event = IO_KEY_EVENT_NONE;
-  64   1          u8 i = 0;
-  65   1          u8 index = 0;
-  66   1      
-  67   1          if (key_event == KEY_EVENT_CLICK) {
-  68   2              index = 1;
-  69   2          } else if (key_event == KEY_EVENT_LONG) {
-  70   2              index = 2;
-  71   2          } else if (key_event == KEY_EVENT_HOLD) {
-  72   2              index = 3;
-  73   2          } else if (key_event == KEY_EVENT_UP) {
-  74   2              index = 4;
-  75   2          }
-  76   1      
-  77   1          for (; i < ARRAY_SIZE(io_key_event_table); i++) {
-  78   2              if (key_val == io_key_event_table[i][0]) {
-  79   3                  ret_key_event = io_key_event_table[i][index];
-  80   3                  break;
-  81   3              }
-  82   2          }
-  83   1      
-  84   1          return ret_key_event;
-  85   1      }
-  86          
-  87          void io_key_handle(void)
-  88          {
-  89   1          u8 io_key_event = IO_KEY_EVENT_NONE;
-  90   1      
-  91   1          if (io_key_para.latest_key_val == IO_KEY_ID_NONE) {
-  92   2              return;
-  93   2          }
-  94   1      
-  95   1          io_key_event = __io_key_get_event__(io_key_para.latest_key_val, io_key_para.latest_key_event);
-  96   1          io_key_para.latest_key_val = IO_KEY_ID_NONE;
-  97   1          io_key_para.latest_key_event = KEY_EVENT_NONE;
-  98   1      
-  99   1          switch (io_key_event) {
- 100   2          case KEY_EVENT_CLICK:
- 101   2      #if USER_DEBUG_ENABLE
- 102   2              // printf("click\n");
- 103   2      #endif
- 104   2      
- 105   2              if (UI_STATE_NORMAL == ui_manager.state) {
- 106   3                  // 正常显示模式下，按键单击切换显示的里程类型
- 107   3                  // TODO
- 108   3              }
- 109   2      
- 110   2      #if 0
+  53   1          P0_MD1 &= ~(GPIO_P07_MODE_SEL(0x03)); // 输入模式
+  54   1      }
+  55          
+  56          u8 io_key_get_key_id(void)
+  57          {
+  58   1          if (IO_KEY_PIN == 0) {
+  59   2              // 引脚配置为输入上拉，低电平表示按键按下
+  60   2              return IO_KEY_ID_VALID;
+  61   2          }
+  62   1      
+  63   1          return NO_KEY;
+  64   1      }
+  65          
+  66          u8 __io_key_get_event__(u8 key_val, u8 key_event)
+  67          {
+  68   1          u8 ret_key_event = IO_KEY_EVENT_NONE;
+  69   1          u8 i = 0;
+  70   1          u8 index = 0;
+  71   1      
+  72   1          if (key_event == KEY_EVENT_CLICK) {
+  73   2              index = 1;
+  74   2          } else if (key_event == KEY_EVENT_LONG) {
+  75   2              index = 2;
+  76   2          } else if (key_event == KEY_EVENT_HOLD) {
+  77   2              index = 3;
+  78   2          } else if (key_event == KEY_EVENT_UP) {
+  79   2              index = 4;
+  80   2          }
+  81   1      
+  82   1          for (; i < ARRAY_SIZE(io_key_event_table); i++) {
+  83   2              if (key_val == io_key_event_table[i][0]) {
+  84   3                  ret_key_event = io_key_event_table[i][index];
+  85   3                  break;
+  86   3              }
+  87   2          }
+  88   1      
+  89   1          return ret_key_event;
+  90   1      }
+  91          
+  92          void io_key_handle(void)
+  93          {
+  94   1          u8 io_key_event = IO_KEY_EVENT_NONE;
+  95   1      
+  96   1          if (io_key_para.latest_key_val == IO_KEY_ID_NONE) {
+  97   2              return;
+  98   2          }
+  99   1      
+ 100   1          io_key_event = __io_key_get_event__(io_key_para.latest_key_val,
+ 101   1                                              io_key_para.latest_key_event);
+ 102   1          io_key_para.latest_key_val = IO_KEY_ID_NONE;
+ 103   1          io_key_para.latest_key_event = KEY_EVENT_NONE;
+ 104   1      
+ 105   1          switch (io_key_event) {
+ 106   2          case KEY_EVENT_CLICK:
+ 107   2      #if USER_DEBUG_ENABLE
+                      // printf("click\n");
+              #endif
+ 110   2      
+ 111   2              if (UI_STATE_NORMAL == ui_manager.state) {
+ 112   3                  // 正常显示模式下，按键单击切换显示的里程类型
+ 113   3                  instrument.save_info.is_display_total_mileage =
+ 114   3                      !instrument.save_info.is_display_total_mileage;
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 3   
+
+ 115   3                  // 立即更新里程显示：
+ 116   3                  aip3368h_display_mileage_refresh();
+ 117   3              }
+ 118   2      
+ 119   2      #if 0
                               if (UI_STATE_NORMAL == ui_manager.state)
                               {
                                       instrument.save_info.is_display_total_mileage =
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 3   
-
                                               !instrument.save_info.is_display_total_mileage;
                                       
-                                      instrument_info_save();
+                                      instrument_info_save_enable();
                               }
                               else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE ==
                                                ui_manager.state)
@@ -157,17 +165,33 @@ line level    source
                
                               }
               #endif
- 143   2      
- 144   2              ui_display_refresh();
- 145   2              break;
- 146   2          case IO_KEY_EVENT_LONG:
- 147   2      #if USER_DEBUG_ENABLE
- 148   2              // printf("Long\n");
- 149   2      #endif
- 150   2      
- 151   2      #if 0
+ 152   2      
+ 153   2              ui_display_refresh();
+ 154   2              break;
+ 155   2          case IO_KEY_EVENT_LONG:
+ 156   2      #if USER_DEBUG_ENABLE
+                      // printf("Long\n");
+              #endif
+ 159   2      
+ 160   2              if (UI_STATE_NORMAL == ui_manager.state) {
+ 161   3                  // 如果正在显示里程
+ 162   3                  // if (1 == instrument.save_info.is_display_total_mileage) {
+ 163   3                  //     /*
+ 164   3                  //         如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
+ 165   3                  //     */
+ 166   3                  //     ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
+ 167   3                  // } else {
+ 168   3                  //     // 如果显示的是 TRIP 里程，清空它
+ 169   3                  //     instrument.save_info.subtotal_mileage = 0;
+ 170   3                  //     instrument_info_save_enable();
+ 171   3                  // }
+ 172   3              }
+ 173   2      
+ 174   2      #if 0
                               if (UI_STATE_NORMAL == ui_manager.state)
                               {
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 4   
+
                                       // 如果正在显示里程
                                       if (1 == instrument.save_info.is_display_total_mileage)
                                       {
@@ -180,7 +204,7 @@ line level    source
                                       {
                                               // 如果显示的是 TRIP 里程，清空它
                                               instrument.save_info.subtotal_mileage = 0; 
-                                              instrument_info_save();
+                                              instrument_info_save_enable();
                                       } 
                               }
                               else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE ==
@@ -188,33 +212,31 @@ line level    source
                               {
                                       // 从 设置单位类型 -> 设置车轮周长
                                       ui_manager.state = UI_STATE_SETTING_WHEEL_CIRCUMFERENCE; 
-                                      instrument_info_save(); // 退出单位类型设置后，保存
+                                      instrument_info_save_enable(); // 退出单位类型设置后，保存
                               }
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/10/2026 11:59:06 PAGE 4   
-
                               else if (UI_STATE_SETTING_WHEEL_CIRCUMFERENCE ==
                                                ui_manager.state)
                               {
                                       // 从 设置车轮周长 -> 正常显示
                                       ui_manager.state = UI_STATE_NORMAL; 
-                                      instrument_info_save(); // 退出 车轮周长设置 后，保存
+                                      instrument_info_save_enable(); // 退出 车轮周长设置 后，保存
                               }
               #endif
- 184   2      
- 185   2              ui_display_refresh();
- 186   2      
- 187   2              break;
- 188   2      
- 189   2          default:
- 190   2              break;
- 191   2          }
- 192   1      }
- 193          
- 194          #endif
+ 207   2      
+ 208   2              ui_display_refresh();
+ 209   2      
+ 210   2              break;
+ 211   2      
+ 212   2          default:
+ 213   2              break;
+ 214   2          }
+ 215   1      }
+ 216          
+ 217          #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    140    ----
+   CODE SIZE        =    166    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =     24    ----
    PDATA SIZE       =   ----    ----

@@ -5,7 +5,7 @@
 // 错误处理函数的调用周期计数值：
 static volatile u16 ui_display_err_time_cnt = 0;
 
-volatile ui_manager_t ui_manager;
+volatile ui_manager_t ui_manager = {0};
 
 void ui_manager_init(void)
 {
@@ -25,59 +25,33 @@ void ui_timer_handle_isr(void)
     aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
     // 递增 AIP3368H 显示 速度 刷新时间计数
     aip3368h_display_speed_refresh_time_add();
+    // 递增 AIP3368H 显示 发动机转速 刷新时间计数
+    aip3368h_display_engine_speed_refresh_time_add();
 
     if (ui_display_err_time_cnt < ((u16)-1)) {
         ui_display_err_time_cnt++;
     }
 
-#if 0
-	
-	// 递增 AIP3368H 显示 发动机转速 刷新时间计数
-	aip3368h_display_engine_speed_refresh_time_add();
-	aip3368h_display_err_handle_time_add();
+    if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
+        ui_manager.state == UI_STATE_SETTING_TIME_MINUTE ||
+        ui_manager.state == UI_STATE_SETTING_TIME_HOUR) {
+        if (ui_manager.blink_timer_cnt < ((u16)-1)) {
+            ui_manager.blink_timer_cnt++;
+        }
 
-	if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
-		ui_manager.state == UI_STATE_SETTING_WHEEL_CIRCUMFERENCE)
-	{
-		if (ui_manager.blink_timer_cnt < ((u16)-1))
-		{
-			ui_manager.blink_timer_cnt++;
-		}
-
-		if (ui_manager.auto_exit_setting_time_cnt < ((u16)-1))
-		{
-			ui_manager.auto_exit_setting_time_cnt++;
-		}
-	}
-	else
-	{
-		ui_manager.blink_timer_cnt = 0;
-		ui_manager.auto_exit_setting_time_cnt = 0;
-	}
-#endif
+        if (ui_manager.auto_exit_setting_time_cnt < ((u16)-1)) {
+            ui_manager.auto_exit_setting_time_cnt++;
+        }
+    } else {
+        ui_manager.blink_timer_cnt = 0;
+        ui_manager.auto_exit_setting_time_cnt = 0;
+    }
 }
 
 // 设置ui状态（切换ui）
 void ui_set_state(ui_state_t state)
 {
     ui_manager.state = state;
-
-    // switch (state)
-    // {
-    // case UI_STATE_NORMAL:
-    // 	// 正常显示
-
-    // 	break;
-    // case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
-    // 	// 设置 要显示的单位类型 km/h 或 mph
-
-    // 	break;
-    // case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
-    // 	// 设置 车轮的周长
-    // 	break;
-    // }
-
-    // ui_display_refresh();
 }
 
 void ui_display_err_handle(void)
@@ -103,6 +77,25 @@ void ui_display_err_handle(void)
                 (0x01 << 8); // 油量 图标
             aip3368h_engine_speed_panel_display_buff[2] |=
                 (0x01 << 11); // 油量 第 0 格 指示灯
+        }
+    }
+
+    // 低电量提示
+    if (instrument.flag_is_in_warning_of_low_battery) {
+        // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
+        // 让第 0 格电量的指示灯、电池8字样、电池图标指示灯一起闪烁
+
+        // 判断电池电量第 0 格指示灯有没有点亮
+        if ((aip3368h_speed_panel_display_buff[3] >> 12) & 0x01) {
+            aip3368h_speed_panel_display_buff[3] &=
+                ~(0x01 << 12); // 电池电量第 0 格指示灯
+            aip3368h_display_battery_8_symbol_light(0);
+            aip3368h_display_battery_icon_light(0);
+        } else {
+            aip3368h_speed_panel_display_buff[3] |=
+                (0x01 << 12); // 电池电量第 0 格指示灯
+            aip3368h_display_battery_8_symbol_light(1);
+            aip3368h_display_battery_icon_light(1);
         }
     }
 }
@@ -176,19 +169,20 @@ void ui_display_handle(void)
 		ui_display_refresh();
 
 		// 自动退出设置界面后，保存相关数据
-		instrument_info_save();
+		instrument_info_save_enable();
 	}
 
 
 	
 
-	aip3368h_display_engine_speed_handle(); // 显示发动机转速
+	
 
 	aip3368h_display_err_handle();
 #endif
 
-    aip3368h_display_speed_handle();   // 显示时速
-    aip3368h_display_mileage_handle(); // 显示里程
+    aip3368h_display_speed_handle();        // 显示时速
+    aip3368h_display_mileage_handle();      // 显示里程
+    aip3368h_display_engine_speed_handle(); // 显示发动机转速
 
     ui_display_err_handle(); // 显示错误提示（例如低油量提示）
     aip3368h_module_display();

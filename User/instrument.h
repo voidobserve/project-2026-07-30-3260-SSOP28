@@ -3,6 +3,9 @@
 
 #include "typedef.h"  
 
+// 延时写入flash的时间：
+#define INSTRUMENT_INFO_SAVE_TIME ((u16)2000)
+
 // 挡位的定义
 enum
 {
@@ -69,7 +72,7 @@ typedef struct
     // 标志位，是否处于低油量提示
     u8 flag_is_in_warning_of_low_fuel;
     // 标志位，是否处于低电量提示
-
+    u8 flag_is_in_warning_of_low_battery;
 
     gear_t gear; // 档位
 
@@ -79,5 +82,10 @@ extern volatile instrument_t instrument;
 void instrument_info_init(void);
 void instrument_info_save(void);
  
+void instrument_info_save_time_add(void);
+void instrument_info_save_enable(void);
+void instrument_info_save_handle(void);
+
+
 
 #endif

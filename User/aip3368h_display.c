@@ -235,10 +235,12 @@ static const aip3368h_display_mapping_t bat_lev_map[] = {
 void __aip3368h_display_engine_speed_gear__(u8 idx, u8 is_display)
 {
     if (is_display) {
-        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx].buff_index] |=
+        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx]
+                                                     .buff_index] |=
             (0x01 << engine_speed_gear_map[idx].bit_offset);
     } else {
-        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx].buff_index] &=
+        aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[idx]
+                                                     .buff_index] &=
             ~(0x01 << engine_speed_gear_map[idx].bit_offset);
     }
 }
@@ -260,11 +262,13 @@ void aip3368h_display_engine_speed_gear(u8 gear)
     for (i = 0; i < ARRAY_SIZE(engine_speed_gear_map); i++) {
         if (gear <= i) {
             // 如果传参的挡位，比当前遍历的挡位还要小，清空对应的显示
-            aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i].buff_index] &=
+            aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i]
+                                                         .buff_index] &=
                 ~(0x01 << engine_speed_gear_map[i].bit_offset);
         } else if ((gear - i) > 0) {
             // 如果传参的挡位，比当前遍历的挡位还要大（至少要大于等于1）
-            aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i].buff_index] |=
+            aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i]
+                                                         .buff_index] |=
                 (0x01 << engine_speed_gear_map[i].bit_offset);
         }
     }
@@ -283,10 +287,12 @@ void aip3368h_display_engine_speed_gear(u8 gear)
 void __aip3368h_display_engine_speed_scale_bar__(u8 idx, u8 is_display)
 {
     if (is_display) {
-        aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[idx].buff_index] |=
+        aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[idx]
+                                                     .buff_index] |=
             (0x01 << engine_speed_scale_map[idx].bit_offset);
     } else {
-        aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[idx].buff_index] &=
+        aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[idx]
+                                                     .buff_index] &=
             ~(0x01 << engine_speed_scale_map[idx].bit_offset);
     }
 }
@@ -308,11 +314,13 @@ void aip3368h_display_engine_speed_scale_bar(u8 scale)
 
         if (scale <= i) {
             // 如果传参的数值，比当前遍历的数值还要小，清空对应的显示
-            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i].buff_index] &=
+            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i]
+                                                         .buff_index] &=
                 ~(0x01 << engine_speed_scale_map[i].bit_offset);
         } else if ((scale - i) > 0) {
             // 如果传参的数值，比当前遍历的数值还要大（至少要大于等于1）
-            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i].buff_index] |=
+            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i]
+                                                         .buff_index] |=
                 (0x01 << engine_speed_scale_map[i].bit_offset);
         }
     }
@@ -354,10 +362,12 @@ void aip3368h_display_gear_border(u8 is_display)
     u8 i;
     for (i = 0; i < ARRAY_SIZE(gear_border_map); i++) {
         if (is_display) {
-            aip3368h_engine_speed_panel_display_buff[gear_border_map[i].buff_index] |=
+            aip3368h_engine_speed_panel_display_buff[gear_border_map[i]
+                                                         .buff_index] |=
                 (0x01 << gear_border_map[i].bit_offset);
         } else {
-            aip3368h_engine_speed_panel_display_buff[gear_border_map[i].buff_index] &=
+            aip3368h_engine_speed_panel_display_buff[gear_border_map[i]
+                                                         .buff_index] &=
                 ~(0x01 << gear_border_map[i].bit_offset);
         }
     }
@@ -581,10 +591,12 @@ void __aip3368h_display_hour_digit__(u8 bit_x, u8 num)
         for (i = 0; i < 7; i++) {
             // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
             if (segment_code & (0x01 << i)) {
-                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i].buff_index] |=
+                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+                                                             .buff_index] |=
                     (0x01 << hour_bit_0_map[i].bit_offset);
             } else {
-                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i].buff_index] &=
+                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+                                                             .buff_index] &=
                     ~(0x01 << hour_bit_0_map[i].bit_offset);
             }
         }
@@ -594,10 +606,12 @@ void __aip3368h_display_hour_digit__(u8 bit_x, u8 num)
         for (i = 0; i < 7; i++) {
             // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
             if (segment_code & (0x01 << i)) {
-                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i].buff_index] |=
+                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+                                                             .buff_index] |=
                     (0x01 << hour_bit_1_map[i].bit_offset);
             } else {
-                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i].buff_index] &=
+                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+                                                             .buff_index] &=
                     ~(0x01 << hour_bit_1_map[i].bit_offset);
             }
         }
@@ -625,10 +639,12 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
         for (i = 0; i < 7; i++) {
             // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
             if (segment_code & (0x01 << i)) {
-                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i].buff_index] |=
+                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+                                                             .buff_index] |=
                     (0x01 << minute_bit_0_map[i].bit_offset);
             } else {
-                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i].buff_index] &=
+                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+                                                             .buff_index] &=
                     ~(0x01 << minute_bit_0_map[i].bit_offset);
             }
         }
@@ -638,10 +654,12 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
         for (i = 0; i < 7; i++) {
             // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
             if (segment_code & (0x01 << i)) {
-                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i].buff_index] |=
+                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+                                                             .buff_index] |=
                     (0x01 << minute_bit_1_map[i].bit_offset);
             } else {
-                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i].buff_index] &=
+                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+                                                             .buff_index] &=
                     ~(0x01 << minute_bit_1_map[i].bit_offset);
             }
         }
@@ -749,10 +767,12 @@ void aip3368h_display_fuel_full_light(u8 is_display)
 void __aip3368h_display_fuel_lev_upper_marker__(u8 idx, u8 is_display)
 {
     if (is_display) {
-        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx].buff_index] |=
+        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx]
+                                                     .buff_index] |=
             (0x01 << fuel_lev_upper_marker_map[idx].bit_offset);
     } else {
-        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx].buff_index] &=
+        aip3368h_engine_speed_panel_display_buff[fuel_lev_upper_marker_map[idx]
+                                                     .buff_index] &=
             ~(0x01 << fuel_lev_upper_marker_map[idx].bit_offset);
     }
 }
@@ -1163,7 +1183,8 @@ void aip3368h_display_mileage_point_light(u8 is_display)
  * @param mileage_unit_type
  *
  */
-void aip3368h_display_mileage(u32 mileage, mileage_display_mode_t mileage_display_mode)
+void aip3368h_display_mileage(u32 mileage,
+                              mileage_display_mode_t mileage_display_mode)
 {
     u8 i;
 
@@ -1238,10 +1259,12 @@ void aip3368h_display_battery_16_symbol_light(u8 is_display)
 void __aip3368h_display_bat_lev_upper_marker_light__(u8 idx, u8 is_display)
 {
     if (is_display) {
-        aip3368h_speed_panel_display_buff[bat_lev_upper_marker_map[idx].buff_index] |=
+        aip3368h_speed_panel_display_buff[bat_lev_upper_marker_map[idx]
+                                              .buff_index] |=
             (0x01 << bat_lev_upper_marker_map[idx].bit_offset);
     } else {
-        aip3368h_speed_panel_display_buff[bat_lev_upper_marker_map[idx].buff_index] &=
+        aip3368h_speed_panel_display_buff[bat_lev_upper_marker_map[idx]
+                                              .buff_index] &=
             ~(0x01 << bat_lev_upper_marker_map[idx].bit_offset);
     }
 }
@@ -1282,17 +1305,23 @@ void __aip3368h_display_bat_lev_light__(u8 idx, u8 is_display)
 /**
  * @brief 根据传参，显示对应的电池电量等级（不包括低电量提示）
  *
- * @param bat_lev 0 ~ 8，第 idx 个指示灯（从左往右，从0开始）
+ * @param bat_lev 1 ~ 8，第 idx 个指示灯（从左往右，从0开始）
+ *              0：清空显示
+ *              1：显示第 0 个指示灯
+ *              2：显示第 1 个指示灯
  *
  */
 void aip3368h_display_bat_lev_light(u8 bat_lev)
 {
     u8 i;
+    // 遍历整个电池电量等级对应的指示灯
     for (i = 0; i < ARRAY_SIZE(bat_lev_map); i++) {
-        if (bat_lev >= i) {
-            __aip3368h_display_bat_lev_light__(i, 1);
-        } else {
+        // 如果当前传参的值减去1，比当前遍历的值还要小，清空对应的显示
+        if (bat_lev <= i) {
             __aip3368h_display_bat_lev_light__(i, 0);
+        } else if (bat_lev >= (i + 1)) {
+            // 例如，如果要点亮第 0 个指示灯，bat_lev至少要大于等于1
+            __aip3368h_display_bat_lev_light__(i, 1);
         }
     }
 }
@@ -1637,7 +1666,7 @@ void aip3368h_display_bat_lev_upper_marker_light_test_1ms_isr(void)
     }
 }
 
-#endif
+
 
 // ==============================================================================
 // ==============================================================================
@@ -1681,6 +1710,7 @@ void aip3368h_display_light_blink_test_1ms_isr(void)
 
     is_display = !is_display;
 }
+#endif
 
 #if 0
 void aip3368h_display_test(void)

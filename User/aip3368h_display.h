@@ -125,10 +125,12 @@ void aip3368h_display_speed_test_1ms_isr(void);
 void aip3368h_display_speed_split_line_light_test_1ms_isr(void);
 void aip3368h_display_mileage_test_1ms_isr(void);
 void aip3368h_display_bat_lev_upper_marker_light_test_1ms_isr(void);
-#endif
 void aip3368h_display_bat_lev_light_test_1ms_isr(void);
-
 void aip3368h_display_light_blink_test_1ms_isr(void);
+#endif
+
+
+
 #if 0
 void aip3368h_display_test(void);
 #endif

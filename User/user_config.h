@@ -7,7 +7,7 @@
 
 #define ARRAY_SIZE(arry) (sizeof(arry) / sizeof(arry[0]))
 
-#define USER_DEBUG_ENABLE 1
+#define USER_DEBUG_ENABLE 0
 #if USER_DEBUG_ENABLE
 #define DEBUG_PIN 
 #endif

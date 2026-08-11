@@ -23,7 +23,8 @@ void adc_config(void)
                 ADC_BIAS_EN(0x1) | // 打开ADC偏置电流能使信号
                 ADC_BIAS_SEL(0x1); // 偏置电流选择：1x
 
-    ADC_TRGS0 |= (0x07 << 4); // 通道 0DLY 的 ADC 时钟个数选择，配置为 4n+1，4 * 29 + 1
+    // 通道 0DLY 的 ADC 时钟个数选择，配置为 4n+1，4 * 29 + 1
+    ADC_TRGS0 |= (0x07 << 4);
     ADC_CHS0 |= (0x01 << 6); // 使能 通道 0DLY 功能
     __EnableIRQ(ADC_IRQn);   // 使能ADC中断
     IE_EA = 1;               // 使能总中断
@@ -33,7 +34,8 @@ void adc_config(void)
 void adc_channel_set(adc_channel_t adc_channel)
 {
     // 清空选择的adc0通道
-    ADC_CHS0 &= ~((0x01 << 4) | (0x01 << 3) | (0x01 << 2) | (0x01 << 1) | (0x01 << 0));
+    ADC_CHS0 &=
+        ~((0x01 << 4) | (0x01 << 3) | (0x01 << 2) | (0x01 << 1) | (0x01 << 0));
     ADC_ACON1 &= ~((0x01 << 6) | // 关闭ADC内部参考使能信号，不使能内部参考电压
                    (0x01 << 5) | // 关闭ADC外部参考使能信号，不使能外部参考电压
                    (0x07 << 0)); // 清空ADC内部参考电压的选择配置
@@ -122,6 +124,10 @@ void adc_channel_switch_by_isr(void)
         break;
     case ADC_CHANNEL_STATUS_SEL_FUEL_END:
         adc_channel_set(ADC_CHANNEL_BATTERY);
+        adc_channel_status = ADC_CHANNEL_STATUS_SEL_BATTERY_BEGIN;
+        break;
+    case ADC_CHANNEL_STATUS_SEL_BATTERY_BEGIN:
+        ADC_CFG0 |= ADC_CHAN0_TRG(0x1); // 触发ADC0转换
         adc_channel_status = ADC_CHANNEL_STATUS_SEL_BATTERY_END;
         break;
     default:
@@ -141,7 +147,7 @@ void ADC_IRQHandler(void) interrupt ADC_IRQn
         ADC_STA |= ADC_CHAN0_DONE(0x01); // 清除ADC0转换完成标志位
         adc_val = (ADC_DATAH0 << 4) | (ADC_DATAL0 >> 4); // 读取ADC0的值
 
-        switch (adc_channel_status) { 
+        switch (adc_channel_status) {
 
         case ADC_CHANNEL_STATUS_SEL_FUEL_END:
             fuel_capacity_adc_val_samples_update(adc_val);

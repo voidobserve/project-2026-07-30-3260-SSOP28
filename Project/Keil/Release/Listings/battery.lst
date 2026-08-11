@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   BATTERY                                                           08/10/2026 18:44:24 PAGE 1   
+C51 COMPILER V9.60.7.0   BATTERY                                                           08/11/2026 18:57:05 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE BATTERY
@@ -42,9 +42,9 @@ line level    source
   31          
   32          /**
   33           * @brief 将数据放入滑动平均数组，由adc中断更新
-  34           * 
-  35           * @param adc_val 
-  36           * 
+  34           *
+  35           * @param adc_val
+  36           *
   37           */
   38          void bat_adc_val_samples_update(u16 adc_val)
   39          {
@@ -62,7 +62,7 @@ line level    source
   51   2          }
   52   1      }
   53          
-C51 COMPILER V9.60.7.0   BATTERY                                                           08/10/2026 18:44:24 PAGE 2   
+C51 COMPILER V9.60.7.0   BATTERY                                                           08/11/2026 18:57:05 PAGE 2   
 
   54          // 从滑动平均数组中读出数据
   55          u16 bat_adc_val_get_avg(void)
@@ -126,56 +126,150 @@ line level    source
  113   1          if (bat_grid_update_time_cnt < ((u16)-1)) {
  114   2              bat_grid_update_time_cnt++;
  115   2          }
-C51 COMPILER V9.60.7.0   BATTERY                                                           08/10/2026 18:44:24 PAGE 3   
+C51 COMPILER V9.60.7.0   BATTERY                                                           08/11/2026 18:57:05 PAGE 3   
 
  116   1      }
  117          
  118          /**
  119           * @brief 将电池电压转换为对应的格子数
  120           *
- 121           */
- 122          u8 bat_vol_to_grid(u16 voltage)
- 123          {
- 124   1          u8 ret = 0; // 默认为0格，对应低电量提示
- 125   1          // TODO
- 126   1      }
-*** WARNING C173 IN LINE 126 OF ..\..\User\battery.c: missing return-expression
-*** WARNING C280 IN LINE 122 OF ..\..\User\battery.c: 'voltage': unreferenced local variable
- 127          
- 128          void bat_scan(void)
- 129          {
- 130   1          u16 adc_val;
- 131   1          u16 voltage;
- 132   1      
- 133   1          static u8 is_initialized = 0;  // 是否初始化过
- 134   1          static u8 bat_grid_of_lag = 0; // 需要延迟显示的电池格子数
- 135   1          u8 bat_grid = 0;               // 电池格子数
- 136   1          u8 bat_grid_diff = 0;          // 电池格子数差值
- 137   1      
- 138   1          if (battery_scan_time_cnt >= BAT_SCAN_PERIOD) {
- 139   2              battery_scan_time_cnt = 0;
+ 121           * @param voltage 电池电压，单位：mV
+ 122           *
+ 123           * @return u8 电池格子数
+ 124           *          0：低电量提示
+ 125           *          1：没有这种情况
+ 126           *          2：2格，表示电池电压大于等于9V
+ 127           *          ...
+ 128           *          9：9格，表示电池电压大于等于16V
+ 129           *
+ 130           */
+ 131          u8 bat_vol_to_grid(u16 voltage)
+ 132          {
+ 133   1          u8 ret = 0; // 默认为0格，对应低电量提示
+ 134   1      
+ 135   1          if (voltage >= BAT_VOLTAGE_OF_FULL_GRID) {
+ 136   2              ret = 9;
+ 137   2          } else if (voltage >= BAT_VOLTAGE_OF_LOW_GRID) {
+ 138   2              // 表达式中的 1，表示至少要点亮1格
+ 139   2              ret = 2 + (voltage - BAT_VOLTAGE_OF_LOW_GRID) / 1000;
  140   2          } else {
- 141   2              // 没有到扫描周期，直接返回
- 142   2              return;
- 143   2          }
- 144   1      
- 145   1          adc_val = bat_adc_val_get_avg();
- 146   1          voltage = ADC_VAL_TO_BAT_VOLTAGE(adc_val);
- 147   1          
- 148   1          printf("adc_val == %u\n", adc_val);
- 149   1          printf("voltage == %u\n", voltage);
- 150   1      }
-*** WARNING C280 IN LINE 133 OF ..\..\User\battery.c: 'is_initialized': unreferenced local variable
-*** WARNING C280 IN LINE 134 OF ..\..\User\battery.c: 'bat_grid_of_lag': unreferenced local variable
- 151          
- 152          #endif // BATTERY_SCAN_ENABLE
-*** WARNING C290 IN LINE 126 OF ..\..\User\battery.c: missing return value
+ 141   2              ret = 0;
+ 142   2          }
+ 143   1      
+ 144   1          return ret;
+ 145   1      }
+ 146          
+ 147          void bat_scan(void)
+ 148          {
+ 149   1          u16 adc_val;
+ 150   1          u16 voltage; // 存放电压值，单位：mV
+ 151   1      
+ 152   1          static u8 is_initialized = 0;           // 是否初始化过
+ 153   1          static volatile u8 bat_grid_of_lag = 0; // 需要延迟显示的电池格子数
+ 154   1          u8 bat_grid = 0;                        // 电池格子数
+ 155   1          u8 bat_grid_diff = 0;                   // 电池格子数差值
+ 156   1      
+ 157   1          if (battery_scan_time_cnt >= BAT_SCAN_PERIOD) {
+ 158   2              battery_scan_time_cnt = 0;
+ 159   2          } else {
+ 160   2              // 没有到扫描周期，直接返回
+ 161   2              return;
+ 162   2          }
+ 163   1      
+ 164   1          adc_val = bat_adc_val_get_avg();
+ 165   1          voltage = ADC_VAL_TO_BAT_VOLTAGE(adc_val);
+ 166   1      
+ 167   1      #if USER_DEBUG_ENABLE
+              // printf("adc_val == %u\n", adc_val);
+              // printf("voltage == %u\n", voltage);
+              #endif
+ 171   1      
+ 172   1          if (is_initialized == 0) {
+ 173   2              is_initialized = 1;
+ 174   2              bat_vol_samples_init(voltage); // 初始化电压值对应的滑动平均数组
+ 175   2              bat_grid = bat_vol_to_grid(voltage);
+ 176   2              bat_grid_of_lag = bat_grid;
+ 177   2      
+C51 COMPILER V9.60.7.0   BATTERY                                                           08/11/2026 18:57:05 PAGE 4   
+
+ 178   2              if (0 == bat_grid_of_lag) {
+ 179   3                  // 电池格子数为0，打开低电量提示
+ 180   3                  instrument.flag_is_in_warning_of_low_battery = 1;
+ 181   3              }
+ 182   2      
+ 183   2              // 如果 0 == bat_grid_of_lag，让显示函数里面清空显示
+ 184   2              aip3368h_display_bat_lev_light(bat_grid_of_lag);
+ 185   2          } else {
+ 186   2              // 如果已经初始化过，则更新电压值对应的滑动平均数组
+ 187   2              bat_vol_samples_update(voltage);
+ 188   2          }
+ 189   1      
+ 190   1          voltage = bat_vol_get_avg(); // 获取电压值的滑动平均
+ 191   1      #if USER_DEBUG_ENABLE
+                  // printf("avg voltage == %u\n", voltage);
+              #endif
+ 194   1      
+ 195   1          bat_grid = bat_vol_to_grid(voltage);
+ 196   1          if (bat_grid != bat_grid_of_lag) {
+ 197   2              // 电池格子数有变化，需要更新显示
+ 198   2              if (bat_grid > bat_grid_of_lag) {
+ 199   3                  bat_grid_diff = bat_grid - bat_grid_of_lag;
+ 200   3              } else {
+ 201   3                  bat_grid_diff = bat_grid_of_lag - bat_grid;
+ 202   3              }
+ 203   2          }
+ 204   1      
+ 205   1          /*
+ 206   1              没有到电池电压格子数的更新时间，直接返回
+ 207   1              1. 差值大于等于2，说明电池电压变化幅度较大，按照更新周期较小的来更�
+             -��
+ 208   1              2. 差值小于等于1，说明电池电压变化幅度不大，按照更新周期较大的来更�
+             -��
+ 209   1          */
+ 210   1          // if ((bat_grid_diff >= 2 &&
+ 211   1          //      bat_grid_update_time_cnt >= BAT_DISPLAY_UPDATE_PERIOD) ||
+ 212   1          //     (bat_grid_diff <= 1 && bat_grid_update_time_cnt >=
+ 213   1          //                                BAT_DISPLAY_UPDATE_PERIOD_WHEN_BAT_CLOSE))
+ 214   1          //                                {
+ 215   1          //     return;
+ 216   1          // }
+ 217   1      
+ 218   1          bat_grid_update_time_cnt = 0;
+ 219   1      
+ 220   1          if (bat_grid_of_lag < bat_grid) {
+ 221   2              bat_grid_of_lag++;
+ 222   2          } else if (bat_grid_of_lag > bat_grid) {
+ 223   2              bat_grid_of_lag--;
+ 224   2          }
+ 225   1      
+ 226   1      #if USER_DEBUG_ENABLE
+                  // printf("bat_grid == %u\n", (u16)bat_grid);
+                  // printf("bat_grid_of_lag == %u\n", (u16)bat_grid_of_lag);
+              #endif
+ 230   1      
+ 231   1          if (0 == bat_grid_of_lag) {
+ 232   2              // 电池格子数为0，打开低电量提示
+ 233   2      
+ 234   2              if (0 == instrument.flag_is_in_warning_of_low_battery) {
+ 235   3                  // 如果之前不处于低电量提示，先关闭对应的指示灯
+ 236   3                  aip3368h_display_bat_lev_light(0);
+ 237   3              }
+C51 COMPILER V9.60.7.0   BATTERY                                                           08/11/2026 18:57:05 PAGE 5   
+
+ 238   2      
+ 239   2              instrument.flag_is_in_warning_of_low_battery = 1;
+ 240   2          } else {
+ 241   2              instrument.flag_is_in_warning_of_low_battery = 0;
+ 242   2              aip3368h_display_bat_lev_light(bat_grid_of_lag);
+ 243   2          }
+ 244   1      }
+ 245          #endif // BATTERY_SCAN_ENABLE
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    441    ----
-   CONSTANT SIZE    =     30    ----
-   XDATA SIZE       =     90      19
+   CODE SIZE        =    619    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     90      14
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
@@ -183,4 +277,4 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
 END OF MODULE INFORMATION.
 
 
-C51 COMPILATION COMPLETE.  5 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

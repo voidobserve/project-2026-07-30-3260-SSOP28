@@ -8,7 +8,7 @@
 
 // ======================================================
 // 检测发动机转速所需的配置：
-#define ENGINE_SPEED_SCAN_PIN P02 // 检测发动机转速的引脚
+#define ENGINE_SPEED_SCAN_PIN P27 // 检测发动机转速的引脚
 // 检测到 多少个脉冲 表示 发动机转过一圈
 // #define ENGINE_SPEED_SCAN_PULSE_PER_TURN (60)
 

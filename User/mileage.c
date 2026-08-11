@@ -2,37 +2,67 @@
 // mileage.c
 #include "mileage.h"
 
-volatile u16 mileage_save_time_cnt; // 里程扫描所需的计数值,每隔一定时间将里程写入flash
-volatile u32 distance; // 存放每次扫描时走过的路程（单位：毫米）-->用于里程表的计数
+// 里程扫描所需的计数值,每隔一定时间将里程写入flash
+volatile u16 mileage_save_time_cnt;
+// 存放每次扫描时走过的路程（单位：毫米）-->用于里程表的计数
+volatile u32 distance;
 
-volatile u16 mileage_update_time_cnt; // 里程更新的时间计数,每隔一段时间更新一次当前里程（负责控制发送里程的周期）
+// 里程更新的时间计数,每隔一段时间更新一次当前里程（负责控制发送里程的周期）
+volatile u16 mileage_update_time_cnt;
 
-// 刷新显示的里程（TOTAL 或 TRIP），不包括单位
+static void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
+{
+    if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
+        aip3368h_display_miles_light(0);
+        aip3368h_display_km_light(1);
+    } else if (DISTANCE_UNIT_TYPE_IMPERIAL == distance_unit_type) {
+        aip3368h_display_km_light(0);
+        aip3368h_display_miles_light(1);
+    }
+}
+
+static void aip3368h_display_mileage_value(u32 mileage_value, u8 display_mode)
+{
+    u8 is_trip_mode = (MILEAGE_DISPLAY_MODE_TRIP == display_mode);
+
+    if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
+        // 使用 公制 单位
+        aip3368h_display_mileage(mileage_value / (is_trip_mode ? 100u : 1000u),
+                                 display_mode);
+    } else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
+               instrument.save_info.distance_unit_type) {
+        // 使用 英制 单位
+        // 1km == 0.621427mile
+        // 0.621427 mile * 1610 == 1000.49747 m
+        aip3368h_display_mileage(mileage_value / (is_trip_mode ? 161u : 1610u),
+                                 display_mode);
+    }
+
+    aip3368h_display_mileage_unit_lights(
+        instrument.save_info.distance_unit_type);
+}
+
+static void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
+{
+    aip3368h_display_trip_light(is_display_total_mileage ? 0 : 1);
+    aip3368h_display_odo_light(is_display_total_mileage ? 1 : 0);
+}
+
+/**
+ * @brief 刷新显示的里程（TOTAL 或 TRIP），会刷新单位、TRIP和ODO对应的指示灯
+ *
+ */
 void aip3368h_display_mileage_refresh(void)
 {
-    // 刷新总里程
-    if (instrument.save_info.is_display_total_mileage) {
-        if (instrument.save_info.distance_unit_type == DISTANCE_UNIT_TYPE_METRIC) {
-            // 使用 公制 单位
-            aip3368h_display_mileage(instrument.save_info.total_mileage / 1000, MILEAGE_DISPLAY_MODE_ODO);
-        } else if (instrument.save_info.distance_unit_type == DISTANCE_UNIT_TYPE_IMPERIAL) {
-            // 使用 英制 单位
-            // 1km == 0.621427mile
-            // 0.621427 mile * 1610 == 1000.49747 m
-            aip3368h_display_mileage(instrument.save_info.total_mileage / 1610, MILEAGE_DISPLAY_MODE_ODO);
-        }
-    } else {
-        // 刷新 小计里程(TRIP)
-        if (instrument.save_info.distance_unit_type == DISTANCE_UNIT_TYPE_METRIC) {
-            // 使用 公制 单位
-            aip3368h_display_mileage(instrument.save_info.subtotal_mileage / 100, MILEAGE_DISPLAY_MODE_TRIP);
-        } else if (instrument.save_info.distance_unit_type == DISTANCE_UNIT_TYPE_IMPERIAL) {
-            // 使用 英制 单位
-            // 1km == 0.621427mile
-            // 0.621427 mile * 1610 == 1000.49747 m
-            aip3368h_display_mileage(instrument.save_info.subtotal_mileage / 161, MILEAGE_DISPLAY_MODE_TRIP);
-        }
-    }
+    u8 is_display_total_mileage = instrument.save_info.is_display_total_mileage;
+    u32 mileage_value = is_display_total_mileage
+                            ? instrument.save_info.total_mileage
+                            : instrument.save_info.subtotal_mileage;
+    u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
+                                               : MILEAGE_DISPLAY_MODE_TRIP;
+
+    aip3368h_display_mileage_value(mileage_value, display_mode);
+    aip3368h_display_mileage_mode_lights(is_display_total_mileage);
 }
 
 // 总里程扫描
@@ -50,27 +80,28 @@ void mileage_scan(void)
     if ((mileage_save_time_cnt >= (u16)5 * 1000) && /* xx ms后 */
         flag_is_any_mileage_save)                   /* 里程有变化，需要保存 */
     {
-        instrument_info_save();
+        instrument_info_save_enable();
         flag_is_any_mileage_save = 0;
         mileage_save_time_cnt = 0;
 
         // printf("mile save\n");
 
         // printf("total_mileage %lu\n", instrument.save_info.total_mileage);
-        // printf("sub_total_mileage %lu\n", instrument.save_info.subtotal_mileage);
-        // printf("sub_total_mileage_2 %lu\n", instrument.save_info.subtotal_mileage_2);
+        // printf("sub_total_mileage %lu\n",
+        // instrument.save_info.subtotal_mileage); printf("sub_total_mileage_2
+        // %lu\n", instrument.save_info.subtotal_mileage_2);
     }
 
     if (distance >= 1000) // 1000mm -- 1m
     {
         // 如果走过的距离超过了1m，再进行保存（保存到变量）
-        if (instrument.save_info.total_mileage < (u32)(999999 * 1000)) // 99 9999 KM
-        {
+        // 99 9999 KM
+        if (instrument.save_info.total_mileage < (u32)(999999 * 1000)) {
             instrument.save_info.total_mileage++; // +1m
         }
 
-        if (instrument.save_info.subtotal_mileage < (u32)(999999 * 100)) // 99999.9 KM
-        {
+        // 99999.9 KM
+        if (instrument.save_info.subtotal_mileage < (u32)(999999 * 100)) {
             instrument.save_info.subtotal_mileage++; // +1m
         }
 
@@ -101,7 +132,8 @@ void aip3368h_display_mileage_handle(void)
     if (0 == is_initialized) {
         is_initialized = 1;
         // 显示单位
-        if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
+        if (DISTANCE_UNIT_TYPE_METRIC ==
+            instrument.save_info.distance_unit_type) {
             // 公制单位，km
             aip3368h_display_miles_light(0);
             aip3368h_display_km_light(1);

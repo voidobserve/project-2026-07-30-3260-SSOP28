@@ -87,6 +87,7 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
 
         bat_scan_time_add();
         bat_grid_update_time_add();
+        instrument_info_save_time_add();
 
 #if 0
         
@@ -102,8 +103,7 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
         boot_animation_time_base_add_1ms_isr();
         ui_timer_handle_isr();
 
-        // USER_TO_DO 只在测试时只用：
-
+        // TEST ONLY 只在测试时只用：
 #if AIP3368H_DISPLAY_TEST_ENABLE
         // aip3368h_display_engine_speed_gear_test_1ms_isr();
         // aip3368h_display_engine_speed_scale_test_1ms_isr();
@@ -118,39 +118,8 @@ void TIMR1_IRQHandler(void) interrupt TMR1_IRQn
         // aip3368h_display_bat_lev_upper_marker_light_test_1ms_isr();
         // aip3368h_display_bat_lev_light_test_1ms_isr();
 
-        aip3368h_display_light_blink_test_1ms_isr();
+        // aip3368h_display_light_blink_test_1ms_isr();
 #endif
-
-        // aip3368h_display_test_light_blink_1ms_isr();
-
-        // aip3368h_display_test_back_light_scale_bar();
-        // aip3368h_display_test_engine_speed_scale_bar();
-        // aip3368h_display_test_engine_speed_digit_scale();
-        // aip3368h_display_test_gear();
-        // aip3368h_display_test_speed();
-        // aip3368h_display_test_mileage();
-        // aip3368h_display_test_fuel();
-
-        // {
-        //     static u16 cnt = 0;
-        //     static u8 dir = 0;
-        //     cnt++;
-        //     if (cnt >= 500)
-        //     {
-        //         cnt = 0;
-        //         dir = !dir;
-
-        //         if (dir)
-        //         {
-        //             aip3368h_module_set_brightness(0);
-
-        //         }
-        //         else
-        //         {
-        //             aip3368h_module_set_brightness(80);
-        //         }
-        //     }
-        // }
     }
 
     // 退出中断设置IP，不可删除

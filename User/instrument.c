@@ -6,6 +6,9 @@
 #include "user_config.h"
 
 volatile instrument_t instrument = {0};
+static volatile u8 is_intrument_save_enable = 0; // 是否允许保存数据到 flash
+// 延时写入flash的时间计数
+static volatile u16 instrument_info_save_time_cnt = 0;
 
 void instrument_info_init(void)
 {
@@ -36,7 +39,7 @@ void instrument_info_init(void)
         // 默认使用公制单位
         instrument.save_info.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC;
 
-        instrument_info_save(); // 将数据写回flash
+        instrument_info_save_enable(); // 将数据写回flash
     }
 }
 
@@ -52,8 +55,37 @@ void instrument_info_save(void)
                   sizeof(save_info_t));
 
 #if USER_DEBUG_ENABLE
-    // printf("instrument info save\n");
+// TODO 需要测试一下，看看是否能正常写入
+// printf("instrument info save\n");
 #endif
 
 #endif
+}
+
+// 使能延时写入flash的操作
+void instrument_info_save_enable(void)
+{
+    instrument_info_save_time_cnt = 0;
+    is_intrument_save_enable = 1;
+}
+
+// 递增延时写入flash的时间
+void instrument_info_save_time_add(void)
+{
+    if (is_intrument_save_enable) {
+        // if (instrument_info_save_time_cnt < ((u16)-1)) {
+        instrument_info_save_time_cnt++;
+        // }
+    }
+}
+
+void instrument_info_save_handle(void)
+{
+    if (is_intrument_save_enable &&
+        instrument_info_save_time_cnt >= INSTRUMENT_INFO_SAVE_TIME) {
+
+        is_intrument_save_enable = 0;
+        instrument_info_save_time_cnt = 0;
+        instrument_info_save();
+    }
 }

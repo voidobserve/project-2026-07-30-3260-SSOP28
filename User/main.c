@@ -45,19 +45,19 @@
  * @brief 初始化调试引脚，观察引脚电平翻转
  *
  */
-void debug_pin_init(void)
-{
-    // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
-    // P0_MD0 |= GPIO_P00_MODE_SEL(0x01); // 输出模式
-    // FOUT_S00 = GPIO_FOUT_AF_FUNC;
-    // DEBUG_PIN = 0;
-}
+// void debug_pin_init(void)
+// {
+//     // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
+//     // P0_MD0 |= GPIO_P00_MODE_SEL(0x01); // 输出模式
+//     // FOUT_S00 = GPIO_FOUT_AF_FUNC;
+//     // DEBUG_PIN = 0;
+// }
 #endif
 
 void user_init(void)
 {
 #if USER_DEBUG_ENABLE
-    debug_pin_init();
+    // debug_pin_init();
     uart0_debug_init();
     printf("sys reset\n");
 #endif
@@ -75,7 +75,7 @@ void user_init(void)
 #endif
 
 #if ENGINE_SPEED_SCAN_ENABLE
-    // engine_speed_scan_config(); // 发动机转速扫描的配置
+    engine_speed_scan_config(); // 发动机转速扫描的配置
 #endif
 
     aip1302_config(); // 时钟IC
@@ -138,16 +138,11 @@ void main(void)
         fuel_capacity_scan(); // 油量检测
 #endif
 
-        bat_scan();
-#if 0
-
+        bat_scan(); 
+        
 #if ENGINE_SPEED_SCAN_ENABLE
         engine_speed_scan(); // 检测发动机转速
-#endif
-
-
-
-#endif
+#endif 
 
         ui_display_handle();
     }

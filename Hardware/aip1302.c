@@ -400,7 +400,6 @@ void aip1302_test(void)
 
     u8 ret = 0;
 
-    // TODO 工作异常
     if (aip1302_test_cnt >= 2000) // 每隔一段时间，打印一次时钟ic中的时间
     {
         aip1302_test_cnt = 0;
