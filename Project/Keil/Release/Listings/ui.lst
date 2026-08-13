@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI                                                                08/11/2026 18:57:05 PAGE 1   
+C51 COMPILER V9.60.7.0   UI                                                                08/13/2026 17:54:52 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI
@@ -10,171 +10,203 @@ COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\User\ui.c LARGE OPTIMIZE(9
 line level    source
 
    1          #include "ui.h"
-   2          #include "user_include.h"
-   3          #include "aip3368h_display.h"
-   4          
-   5          // 错误处理函数的调用周期计数值：
-   6          static volatile u16 ui_display_err_time_cnt = 0;
-   7          
-   8          volatile ui_manager_t ui_manager = {0};
+   2          // #include "user_include.h"
+   3          #include "user_config.h"
+   4          #include "aip3368h_display.h"
+   5          
+   6          #include "speed_scan.h"
+   7          #include "engine_speed_scan.h"
+   8          #include "aip1302.h"
    9          
-  10          void ui_manager_init(void)
-  11          {
-  12   1          ui_manager.state = UI_STATE_NORMAL;
-  13   1      
-  14   1          ui_display_refresh();
-  15   1      }
-  16          
-  17          /**
-  18           * @brief ui定时器处理
-  19           *
-  20           * @attention 在定时器调用，负责所有ui相关的计数器处理
-  21           *
-  22           */
-  23          void ui_timer_handle_isr(void)
-  24          {
-  25   1          aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
-  26   1          // 递增 AIP3368H 显示 速度 刷新时间计数
-  27   1          aip3368h_display_speed_refresh_time_add();
-  28   1          // 递增 AIP3368H 显示 发动机转速 刷新时间计数
-  29   1          aip3368h_display_engine_speed_refresh_time_add();
-  30   1      
-  31   1          if (ui_display_err_time_cnt < ((u16)-1)) {
-  32   2              ui_display_err_time_cnt++;
-  33   2          }
-  34   1      
-  35   1          if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
-  36   1              ui_manager.state == UI_STATE_SETTING_TIME_MINUTE ||
-  37   1              ui_manager.state == UI_STATE_SETTING_TIME_HOUR) {
-  38   2              if (ui_manager.blink_timer_cnt < ((u16)-1)) {
-  39   3                  ui_manager.blink_timer_cnt++;
-  40   3              }
-  41   2      
-  42   2              if (ui_manager.auto_exit_setting_time_cnt < ((u16)-1)) {
-  43   3                  ui_manager.auto_exit_setting_time_cnt++;
-  44   3              }
-  45   2          } else {
-  46   2              ui_manager.blink_timer_cnt = 0;
-  47   2              ui_manager.auto_exit_setting_time_cnt = 0;
-  48   2          }
-  49   1      }
-  50          
-  51          // 设置ui状态（切换ui）
-  52          void ui_set_state(ui_state_t state)
-  53          {
-C51 COMPILER V9.60.7.0   UI                                                                08/11/2026 18:57:05 PAGE 2   
-
-  54   1          ui_manager.state = state;
-  55   1      }
-  56          
-  57          void ui_display_err_handle(void)
-  58          {
-  59   1          if (ui_display_err_time_cnt < 475) {
-  60   2              return;
-  61   2          } else {
-  62   2              ui_display_err_time_cnt = 0;
-  63   2          }
-  64   1      
-  65   1          // 低油量 提示
-  66   1          if (instrument.flag_is_in_warning_of_low_fuel) {
-  67   2              // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
-  68   2              // 让第 0 格油量的指示灯和油量图标指示灯一起闪烁
-  69   2      
-  70   2              if ((aip3368h_engine_speed_panel_display_buff[2] >> 11) & 0x01) {
-  71   3                  aip3368h_engine_speed_panel_display_buff[1] &=
-  72   3                      ~(0x01 << 8); // 油量 图标
-  73   3                  aip3368h_engine_speed_panel_display_buff[2] &=
-  74   3                      ~(0x01 << 11); // 油量 第 0 格 指示灯
-  75   3              } else {
-  76   3                  aip3368h_engine_speed_panel_display_buff[1] |=
-  77   3                      (0x01 << 8); // 油量 图标
-  78   3                  aip3368h_engine_speed_panel_display_buff[2] |=
-  79   3                      (0x01 << 11); // 油量 第 0 格 指示灯
-  80   3              }
-  81   2          }
-  82   1      
-  83   1          // 低电量提示
-  84   1          if (instrument.flag_is_in_warning_of_low_battery) {
-  85   2              // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
-  86   2              // 让第 0 格电量的指示灯、电池8字样、电池图标指示灯一起闪烁
-  87   2      
-  88   2              // 判断电池电量第 0 格指示灯有没有点亮
-  89   2              if ((aip3368h_speed_panel_display_buff[3] >> 12) & 0x01) {
-  90   3                  aip3368h_speed_panel_display_buff[3] &=
-  91   3                      ~(0x01 << 12); // 电池电量第 0 格指示灯
-  92   3                  aip3368h_display_battery_8_symbol_light(0);
-  93   3                  aip3368h_display_battery_icon_light(0);
-  94   3              } else {
-  95   3                  aip3368h_speed_panel_display_buff[3] |=
-  96   3                      (0x01 << 12); // 电池电量第 0 格指示灯
-  97   3                  aip3368h_display_battery_8_symbol_light(1);
-  98   3                  aip3368h_display_battery_icon_light(1);
-  99   3              }
- 100   2          }
- 101   1      }
- 102          
- 103          // 显示处理
- 104          void ui_display_handle(void)
- 105          {
- 106   1          switch (ui_manager.state) {
- 107   2          case UI_STATE_NORMAL:
- 108   2              // 正常显示
- 109   2              break;
- 110   2      
- 111   2      #if 0
-                      case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
-                              // 设置 要显示的单位类型 km/h 或 mph
-              
-                              if (ui_manager.blink_timer_cnt >= UI_SETTING_BLINK_PERIOD)
-C51 COMPILER V9.60.7.0   UI                                                                08/11/2026 18:57:05 PAGE 3   
-
-                              {
-                                      ui_manager.blink_timer_cnt = 0;
-              
-                                      if (DISTANCE_UNIT_TYPE_METRIC ==
-                                              instrument.save_info.distance_unit_type)
-                                      {
-                                              // 如果当前 设置的项目 是公制单位
-              
-                                              // 直接读取显存，判断有没有点亮对应的指示灯
-                                              if ((aip3368h_display_buff[5] >> 10) & 0x01)
-                                              {
-                                                      // 如果是点亮的，改为熄灭
-                                                      __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 0);
-                                                      __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 0);
-                                              }
-                                              else
-                                              {
-                                                      // 如果当前是熄灭的，点亮它
-                                                      __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
-                                                      __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_METRIC, 1);
-                                              }
-                                      }
-                                      else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
-                                                       instrument.save_info.distance_unit_type)
-                                      {
-                                              // 直接读取显存，判断有没有点亮对应的指示灯
-                                              if ((aip3368h_display_buff[5] >> 11) & 0x01)
-                                              {
-                                                      // 如果是点亮的，改为熄灭
-                                                      __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 0);
-                                                      __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 0);
-                                              }
-                                              else
-                                              {
-                                                      // 如果当前是熄灭的，点亮它
-                                                      __aip3368h_display_speed_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
-                                                      __aip3368h_display_mileage_unit_type__(DISTANCE_UNIT_TYPE_IMPERIAL, 1);
-                                              }
-                                      }
-                              }
-              
-                              break;
-              
+  10          // 错误处理函数的调用周期计数值：
+  11          static volatile u16 ui_display_err_time_cnt = 0;
+  12          
+  13          volatile ui_manager_t ui_manager = {0};
+  14          
+  15          void ui_manager_init(void)
+  16          {
+  17   1          ui_manager.state = UI_STATE_NORMAL;
+  18   1      
+  19   1          ui_display_refresh();
+  20   1      }
+  21          
+  22          /**
+  23           * @brief ui定时器处理
+  24           *
+  25           * @attention 在定时器调用，负责所有ui相关的计数器处理
+  26           *
+  27           */
+  28          void ui_timer_handle_isr(void)
+  29          {
+  30   1          if (aip1302_update_time_interval < ((u16)-1)) {
+  31   2              aip1302_update_time_interval++;
+  32   2          }
+  33   1      
+  34   1          aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
+  35   1      #if SPEED_SCAN_ENABLE
+                  // 递增 AIP3368H 显示 速度 刷新时间计数
+                  aip3368h_display_speed_refresh_time_add();
               #endif
- 160   2          }
- 161   1      
- 162   1      #if 0
+  39   1          // 递增 AIP3368H 显示 发动机转速 刷新时间计数
+  40   1          aip3368h_display_engine_speed_refresh_time_add();
+  41   1      
+  42   1          if (ui_display_err_time_cnt < ((u16)-1)) {
+  43   2              ui_display_err_time_cnt++;
+  44   2          }
+  45   1      
+  46   1          if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
+  47   1              ui_manager.state == UI_STATE_SETTING_TIME_MINUTE ||
+  48   1              ui_manager.state == UI_STATE_SETTING_TIME_HOUR) {
+  49   2              if (ui_manager.blink_timer_cnt < ((u16)-1)) {
+  50   3                  ui_manager.blink_timer_cnt++;
+  51   3              }
+  52   2      
+  53   2              if (ui_manager.auto_exit_setting_time_cnt < ((u16)-1)) {
+C51 COMPILER V9.60.7.0   UI                                                                08/13/2026 17:54:52 PAGE 2   
+
+  54   3                  ui_manager.auto_exit_setting_time_cnt++;
+  55   3              }
+  56   2          } else {
+  57   2              ui_manager.blink_timer_cnt = 0;
+  58   2              ui_manager.auto_exit_setting_time_cnt = 0;
+  59   2          }
+  60   1      }
+  61          
+  62          // 设置ui状态（切换ui）
+  63          void ui_set_state(ui_state_t state)
+  64          {
+  65   1          ui_manager.state = state;
+  66   1          ui_manager.blink_dir = 0; // 初始化闪烁方向
+  67   1      }
+  68          
+  69          /**
+  70           * @brief 显示错误提示，由 ui_display_handle() 调用
+  71           *
+  72           */
+  73          void ui_display_err_handle(void)
+  74          {
+  75   1          if (ui_display_err_time_cnt < 475) {
+  76   2              return;
+  77   2          } else {
+  78   2              ui_display_err_time_cnt = 0;
+  79   2          }
+  80   1      
+  81   1          // 低油量 提示
+  82   1          if (instrument.flag_is_in_warning_of_low_fuel) {
+  83   2              // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
+  84   2              // 让第 0 格油量的指示灯和油量图标指示灯一起闪烁
+  85   2      
+  86   2              if ((aip3368h_engine_speed_panel_display_buff[2] >> 11) & 0x01) {
+  87   3                  // 油量 图标
+  88   3                  aip3368h_engine_speed_panel_display_buff[1] &= ~(0x01 << 8);
+  89   3                  // 油量 第 0 格 指示灯
+  90   3                  aip3368h_engine_speed_panel_display_buff[2] &= ~(0x01 << 11);
+  91   3              } else {
+  92   3                  // 油量 图标
+  93   3                  aip3368h_engine_speed_panel_display_buff[1] |= (0x01 << 8);
+  94   3                  // 油量 第 0 格 指示灯
+  95   3                  aip3368h_engine_speed_panel_display_buff[2] |= (0x01 << 11);
+  96   3              }
+  97   2          }
+  98   1      
+  99   1          // 低电量提示
+ 100   1          if (instrument.flag_is_in_warning_of_low_battery) {
+ 101   2              // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
+ 102   2              // 让第 0 格电量的指示灯、电池8字样、电池图标指示灯一起闪烁
+ 103   2      
+ 104   2              // 判断电池电量第 0 格指示灯有没有点亮
+ 105   2              if ((aip3368h_speed_panel_display_buff[3] >> 12) & 0x01) {
+ 106   3                  aip3368h_speed_panel_display_buff[3] &= ~(0x01 << 12);
+ 107   3                  aip3368h_display_battery_8_symbol_light(0);
+ 108   3                  aip3368h_display_battery_icon_light(0);
+ 109   3              } else {
+ 110   3                  aip3368h_speed_panel_display_buff[3] |= (0x01 << 12);
+ 111   3                  aip3368h_display_battery_8_symbol_light(1);
+ 112   3                  aip3368h_display_battery_icon_light(1);
+ 113   3              }
+ 114   2          }
+ 115   1      
+C51 COMPILER V9.60.7.0   UI                                                                08/13/2026 17:54:52 PAGE 3   
+
+ 116   1          // 时间冒号闪烁（样机的时间分隔符与错误提示共用一个时基）
+ 117   1          if ((aip3368h_engine_speed_panel_display_buff[1] >> 6) & 0x01) {
+ 118   2              aip3368h_display_time_colon_light(0);
+ 119   2          } else {
+ 120   2              aip3368h_display_time_colon_light(1);
+ 121   2          }
+ 122   1      }
+ 123          
+ 124          // 显示处理
+ 125          void ui_display_handle(void)
+ 126          {
+ 127   1          switch (ui_manager.state) {
+ 128   2          case UI_STATE_NORMAL:
+ 129   2              // 正常显示
+ 130   2              aip3368h_display_time(aip1302_info.time_hour, aip1302_info.time_min);
+ 131   2              break;
+ 132   2      
+ 133   2          case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
+ 134   2              // 设置 要显示的单位类型 km/h 或 mph
+ 135   2      
+ 136   2              if (ui_manager.blink_timer_cnt >= UI_SETTING_BLINK_PERIOD) {
+ 137   3                  ui_manager.blink_timer_cnt = 0;
+ 138   3      
+ 139   3                  if (DISTANCE_UNIT_TYPE_METRIC ==
+ 140   3                      instrument.save_info.distance_unit_type) {
+ 141   4                      // 如果当前 设置的项目 是公制单位
+ 142   4      
+ 143   4                      // 直接读取显存，判断有没有点亮对应的指示灯
+ 144   4                      if ((aip3368h_speed_panel_display_buff[0] >> 3) & 0x01) {
+ 145   5                          // 如果是点亮的，改为熄灭
+ 146   5                          aip3368h_display_km_light(0);
+ 147   5                          aip3368h_display_kmh_light(0);
+ 148   5                      } else {
+ 149   5                          // 如果当前是熄灭的，点亮它
+ 150   5                          aip3368h_display_km_light(1);
+ 151   5                          aip3368h_display_kmh_light(1);
+ 152   5                      }
+ 153   4                  } else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
+ 154   3                             instrument.save_info.distance_unit_type) {
+ 155   4                      // 直接读取显存，判断有没有点亮对应的指示灯
+ 156   4                      if ((aip3368h_speed_panel_display_buff[0] >> 2) & 0x01) {
+ 157   5                          // 如果是点亮的，改为熄灭
+ 158   5                          aip3368h_display_miles_light(0);
+ 159   5                          aip3368h_display_mph_light(0);
+ 160   5                      } else {
+ 161   5                          // 如果当前是熄灭的，点亮它
+ 162   5                          aip3368h_display_miles_light(1);
+ 163   5                          aip3368h_display_mph_light(1);
+ 164   5                      }
+ 165   4                  }
+ 166   3              }
+ 167   2      
+ 168   2              break;
+ 169   2      
+ 170   2          case UI_STATE_SETTING_TIME_MINUTE:
+ 171   2              // 设置 时间 分钟
+ 172   2      
+ 173   2              if (ui_manager.blink_timer_cnt < UI_SETTING_BLINK_PERIOD) {
+ 174   3                  return;
+ 175   3              }
+ 176   2      
+ 177   2              ui_manager.blink_timer_cnt = 0;
+C51 COMPILER V9.60.7.0   UI                                                                08/13/2026 17:54:52 PAGE 4   
+
+ 178   2      
+ 179   2              if (0 == ui_manager.blink_dir) {
+ 180   3                  aip3368h_display_time_digits_when_setting(1, aip1302_info.time_min,
+ 181   3                                                            1);
+ 182   3              } else {
+ 183   3                  aip3368h_display_time_digits_when_setting(0, aip1302_info.time_min,
+ 184   3                                                            1);
+ 185   3              }
+ 186   2      
+ 187   2              ui_manager.blink_dir = !ui_manager.blink_dir;
+ 188   2      
+ 189   2              break;
+ 190   2          }
+ 191   1      
+ 192   1      #if 0
               
                       // 设置超时
                       if (ui_manager.auto_exit_setting_time_cnt >= UI_SETTING_TIME_OUT_CNT)
@@ -187,79 +219,77 @@ line level    source
                               instrument_info_save_enable();
                       }
               
-              
-                      
-              
-C51 COMPILER V9.60.7.0   UI                                                                08/11/2026 18:57:05 PAGE 4   
-
-                      
-              
-                      aip3368h_display_err_handle();
               #endif
- 182   1      
- 183   1          aip3368h_display_speed_handle();        // 显示时速
- 184   1          aip3368h_display_mileage_handle();      // 显示里程
- 185   1          aip3368h_display_engine_speed_handle(); // 显示发动机转速
- 186   1      
- 187   1          ui_display_err_handle(); // 显示错误提示（例如低油量提示）
- 188   1          aip3368h_module_display();
- 189   1      }
- 190          
- 191          /**
- 192           * @brief
- 193           *              清空所有计时
- 194           *              立即显示内容
- 195           *
- 196           */
- 197          void ui_display_refresh(void)
- 198          {
- 199   1          ui_manager.blink_timer_cnt = 0;
- 200   1          ui_manager.auto_exit_setting_time_cnt = 0;
- 201   1      
- 202   1      #if 0
-                      switch (ui_manager.state)
-                      {
-                      case UI_STATE_NORMAL:
-                              // 正常显示
-              
-                              // 显示时速
-                              aip3368h_display_speed_by_unit_type(instrument.speed_of_lag);
-              
-                              break;
-                      case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
-                              // 设置 要显示的单位类型 km/h 或 mph
-              
-                              break;
-                      case UI_STATE_SETTING_WHEEL_CIRCUMFERENCE:
-                              // 设置 车轮的周长
-                              
-                              break;
-                      }
-              
-                      aip3368h_display_mileage_refresh(); // 立即显示里程
-              
-                      // 立即显示单位类型
-                      if (DISTANCE_UNIT_TYPE_METRIC ==
-                              instrument.save_info.distance_unit_type)
-                      {
-                              aip3368h_display_speed_unit_type(DISTANCE_UNIT_TYPE_METRIC);
-                              aip3368h_display_mileage_unit_type(DISTANCE_UNIT_TYPE_METRIC);
-                      }
-                      else
-                      {
-                              aip3368h_display_speed_unit_type(DISTANCE_UNIT_TYPE_IMPERIAL);
-                              aip3368h_display_mileage_unit_type(DISTANCE_UNIT_TYPE_IMPERIAL);
-                      }
+ 206   1      
+ 207   1      #if SPEED_SCAN_ENABLE
+                  aip3368h_display_speed_handle(); // 显示时速
               #endif
- 237   1      }
+ 210   1          aip3368h_display_mileage_handle();      // 显示里程
+ 211   1          aip3368h_display_engine_speed_handle(); // 显示发动机转速
+ 212   1      
+ 213   1          if (aip1302_update_time_interval >= AIP1302_UPDATE_TIME_INTERVAL) {
+ 214   2              aip1302_update_time_interval = 0;
+ 215   2              aip1302_read_all(); // 读取时间
+ 216   2          }
+ 217   1      
+ 218   1          ui_display_err_handle(); // 显示错误提示（例如低油量提示）
+ 219   1          aip3368h_module_display();
+ 220   1      }
+ 221          
+ 222          /**
+ 223           * @brief
+ 224           *              清空所有计时
+ 225           *              立即显示内容
+ 226           *
+ 227           * @note 只在切换了状态，需要立即刷新显示时使用，不能在每次显示时调用
+ 228           *
+ 229           */
+ 230          void ui_display_refresh(void)
+ 231          {
+ 232   1          ui_manager.blink_timer_cnt = 0;
+ 233   1          ui_manager.auto_exit_setting_time_cnt = 0;
+ 234   1      
+ 235   1          switch (ui_manager.state) {
+ 236   2          case UI_STATE_NORMAL:
+ 237   2              // 正常显示
+ 238   2      
+ 239   2      #if SPEED_SCAN_ENABLE
+C51 COMPILER V9.60.7.0   UI                                                                08/13/2026 17:54:52 PAGE 5   
 
+                      // 显示时速
+                      aip3368h_display_speed_by_unit_type(instrument.speed_of_lag);
+              #endif
+ 243   2      
+ 244   2              break;
+ 245   2          case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
+ 246   2              // 设置 要显示的单位类型 km/h 或 mph
+ 247   2      
+ 248   2              break;
+ 249   2          case UI_STATE_SETTING_TIME_MINUTE:
+ 250   2              // 设置 车轮的周长
+ 251   2      
+ 252   2              break;
+ 253   2          }
+ 254   1      
+ 255   1          aip3368h_display_mileage_refresh(); // 立即刷新显示的里程
+ 256   1      
+ 257   1          // 立即显示 时速 单位类型
+ 258   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
+ 259   2              // 公制单位
+ 260   2              aip3368h_display_mph_light(0);
+ 261   2              aip3368h_display_kmh_light(1);
+ 262   2          } else {
+ 263   2              // 英制单位
+ 264   2              aip3368h_display_kmh_light(0);
+ 265   2              aip3368h_display_mph_light(1);
+ 266   2          }
+ 267   1      }
 
-C51 COMPILER V9.60.7.0   UI                                                                08/11/2026 18:57:05 PAGE 5   
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    266    ----
+   CODE SIZE        =    570    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =      9    ----
+   XDATA SIZE       =     10    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

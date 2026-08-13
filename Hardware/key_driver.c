@@ -1,7 +1,5 @@
 #include "key_driver.h"
-
-#if (IO_KEY_ENABLE)
-
+  
 #include "typedef.h"
 
 enum
@@ -239,5 +237,4 @@ _scan_end:
     return;
 #endif
 }
-
-#endif // #if (TOUCH_KEY_ENABLE  || AD_KEY_ENABLE)
+ 

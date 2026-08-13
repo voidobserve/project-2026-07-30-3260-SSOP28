@@ -7,6 +7,7 @@
 #define UI_SETTING_TIME_OUT_CNT ((u16)2 * 12 * 400)
 #define UI_SETTING_BLINK_PERIOD ((u16)400)
 
+
 enum
 {
     UI_STATE_NORMAL,
@@ -25,8 +26,9 @@ typedef struct
     u16 state_timeout_cnt;
     u16 auto_exit_setting_time_cnt; // 自动退出设置界面的计时器
 
-    ui_state_t state;
+    u8 blink_dir;
 
+    ui_state_t state;  
 } ui_manager_t;
 
 extern volatile ui_manager_t ui_manager;

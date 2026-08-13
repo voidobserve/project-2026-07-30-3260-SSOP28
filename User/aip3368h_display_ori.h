@@ -6,6 +6,7 @@
 #include "typedef.h"
 
 #define AIP3368H_DISPLAY_TEST_ENABLE 0
+ 
 
 // 用于建立指示灯和显存的映射关系：
 typedef struct
@@ -71,19 +72,23 @@ extern volatile aip3368h_display_obj_t aip3368h_display_obj;
 void aip3368h_display_left_turn_light(u8 is_enable);  // 左转灯
 void aip3368h_display_right_turn_light(u8 is_enable); // 右转灯
 void aip3368h_display_err_light(u8 is_enable);        // 故障 指示
-void aip3368h_display_low_beam_indicator_light(u8 is_enable); // 显示 小灯（近光灯） 指示灯
-void aip3368h_display_high_beam_indicator_light(u8 is_enable); // 显示 大灯（远光灯） 指示灯
+void aip3368h_display_low_beam_indicator_light(
+    u8 is_enable); // 显示 小灯（近光灯） 指示灯
+void aip3368h_display_high_beam_indicator_light(
+    u8 is_enable); // 显示 大灯（远光灯） 指示灯
 void aip3368h_display_back_light_scale_bar(u8 level);
 void aip3368h_display_engine_speed_scale_bar(u8 level);
 void aip3368h_display_x1000rpm_light(u8 is_enable);
 void aip3368h_display_engine_speed_digit_scale(u8 num);
-void aip3368h_display_gear_light(u8 is_enable); // 显示 挡位 "GEAR" 字样指示灯（白）
+void aip3368h_display_gear_light(
+    u8 is_enable); // 显示 挡位 "GEAR" 字样指示灯（白）
 void __aip3368h_display_gear_n_light__(u8 is_enable);
 void __aip3368h_display_gear_digit__(u8 level);
 void aip3368h_display_gear(u8 level);
 
 // 时速单位类型：
-void __aip3368h_display_speed_unit_type__(distance_unit_type_t type, u8 is_enable);
+void __aip3368h_display_speed_unit_type__(distance_unit_type_t type,
+                                          u8 is_enable);
 void aip3368h_display_speed_unit_type(distance_unit_type_t type);
 // 时速：
 void __aip3368h_display_speed_seg__(u8 bit_x, seg_index_t seg, u8 is_enable);
@@ -91,7 +96,8 @@ void __aip3368h_display_speed_bit_x__(u8 bit_x, u8 number);
 void __aip3368h_display_speed_bit_x_clear__(u8 bit_x);
 void aip3368h_display_speed(u8 speed);
 // 里程单位类型：
-void __aip3368h_display_mileage_unit_type__(distance_unit_type_t type, u8 is_enable);
+void __aip3368h_display_mileage_unit_type__(distance_unit_type_t type,
+                                            u8 is_enable);
 void aip3368h_display_mileage_unit_type(distance_unit_type_t type);
 // 里程
 void __aip3368h_display_mileage_bit_x__(u8 bit_x, u8 number);

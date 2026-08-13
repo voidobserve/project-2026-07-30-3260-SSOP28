@@ -17,6 +17,8 @@ extern volatile u16 mileage_update_time_cnt; // 里程更新的时间计数,每�
 void mileage_scan(void); // 里程扫描（大计里程扫描 + 小计里程扫描）
 
 void aip3368h_display_mileage_refresh(void);
+void aip3368h_display_mileage_unit_lights(u8 distance_unit_type);
+
 void aip3368h_display_mileage_handle(void);
 
 #endif

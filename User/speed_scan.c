@@ -1,7 +1,7 @@
 #include "speed_scan.h"
 #include "aip3368h_display.h"
 #include "instrument.h" // 包含仪表的参数
-#include "mileage.h" // 包含里程的参数 distance 
+#include "mileage.h"    // 包含里程的参数 distance
 
 #if SPEED_SCAN_ENABLE
 
@@ -176,6 +176,7 @@ void speed_scan(void)
         flag_is_speed_scan_over_time = 0;
 
         if (cur_speed > 0) {
+            // 显示时加入了一阶低通滤波，这里给得到的速度加上补偿
             cur_speed = (u32)cur_speed * 102 / 100;
         }
 

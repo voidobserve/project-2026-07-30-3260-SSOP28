@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   AIP3368                                                           08/11/2026 18:57:03 PAGE 1   
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/13/2026 11:19:06 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE AIP3368
@@ -62,7 +62,7 @@ line level    source
                   }
                   // PDM = 0;
               }
-C51 COMPILER V9.60.7.0   AIP3368                                                           08/11/2026 18:57:03 PAGE 2   
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/13/2026 11:19:06 PAGE 2   
 
               #endif
   55          
@@ -126,7 +126,7 @@ line level    source
  113   3                  dat_group_1 <<= 1;
  114   3                  dat_group_2 <<= 1;
  115   3      
-C51 COMPILER V9.60.7.0   AIP3368                                                           08/11/2026 18:57:03 PAGE 3   
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/13/2026 11:19:06 PAGE 3   
 
  116   3                  DCK = 0;
  117   3                  aip3368h_delay();
@@ -159,8 +159,8 @@ line level    source
  144   2          }
  145   1      
  146   1      #if USER_DEBUG_ENABLE
-              // printf("aip3368h_module_display\n");
-              #endif
+ 147   1      // printf("aip3368h_module_display\n");
+ 148   1      #endif
  149   1      
  150   1      #if AIP3368H_FLASH_TEST_ENABLE
               
@@ -190,7 +190,7 @@ line level    source
  173          
  174          void aip3368h_module_init(void)
  175          {
-C51 COMPILER V9.60.7.0   AIP3368                                                           08/11/2026 18:57:03 PAGE 4   
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/13/2026 11:19:06 PAGE 4   
 
  176   1          // 显示驱动芯片有记忆功能（数据锁存），每次上电应该清空显存
  177   1          memset(aip3368h_speed_panel_display_buff, 0x00, sizeof(aip3368h_speed_panel_display_buff));
@@ -254,7 +254,7 @@ line level    source
  234           *          数值越大，亮度越高
  235           *
  236           */
-C51 COMPILER V9.60.7.0   AIP3368                                                           08/11/2026 18:57:03 PAGE 5   
+C51 COMPILER V9.60.7.0   AIP3368                                                           08/13/2026 11:19:06 PAGE 5   
 
  237          void aip3368h_module_set_brightness(u8 brightness)
  238          {

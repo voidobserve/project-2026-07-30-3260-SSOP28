@@ -6,6 +6,10 @@
 #define IC_1302_ENABLE 1
 #define AIP1302_TEST_ENABLE 0 // TEST ONLY
 
+
+// 每隔多久，从时钟IC读取一次时间，更新显示
+#define AIP1302_UPDATE_TIME_INTERVAL 1000 // 单位ms
+
 #if IC_1302_ENABLE
 
 typedef struct
@@ -13,9 +17,7 @@ typedef struct
     // 日期 4byte 年 月 日
     u16 year; // 年份
     u8 month; // 月份
-    u8 day;   // 日期
-
-    // u8 weekday; // 存放星期几?
+    u8 day;   // 日期 
 
     // 时间 3byte 时 分 秒，24H制存放
     u8 time_hour;
@@ -44,6 +46,7 @@ typedef struct
 #define AIP1302_DELAY() delay(4)
 
 extern volatile aip1302_info_t aip1302_info;
+extern volatile u16 aip1302_update_time_interval;
 
 void aip1302_config(void);
 u8 aip1302_read_byte(const u8 cmd);

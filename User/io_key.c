@@ -114,16 +114,26 @@ void io_key_handle(void)
                 !instrument.save_info.is_display_total_mileage;
             // 立即更新里程显示：
             aip3368h_display_mileage_refresh();
+            aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+        } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
+
+            // 切换 单位类型
+            if (DISTANCE_UNIT_TYPE_METRIC ==
+                instrument.save_info.distance_unit_type) {
+                instrument.save_info.distance_unit_type =
+                    DISTANCE_UNIT_TYPE_IMPERIAL;
+            } else {
+                instrument.save_info.distance_unit_type =
+                    DISTANCE_UNIT_TYPE_METRIC;
+            } 
+
+            // 清空闪烁的时间计数
+            ui_manager.blink_timer_cnt = 0; 
+            ui_manager.blink_dir = 0;
         }
 
 #if 0
-		if (UI_STATE_NORMAL == ui_manager.state)
-		{
-			instrument.save_info.is_display_total_mileage =
-				!instrument.save_info.is_display_total_mileage;
-			
-			instrument_info_save_enable();
-		}
+ 
 		else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE ==
 				 ui_manager.state)
 		{
@@ -158,17 +168,24 @@ void io_key_handle(void)
 #endif
 
         if (UI_STATE_NORMAL == ui_manager.state) {
-            // 如果正在显示里程
-            // if (1 == instrument.save_info.is_display_total_mileage) {
-            //     /*
-            //         如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
-            //     */
-            //     ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
-            // } else {
-            //     // 如果显示的是 TRIP 里程，清空它
-            //     instrument.save_info.subtotal_mileage = 0;
-            //     instrument_info_save_enable();
-            // }
+            // 如果正在显示总里程
+            if (1 == instrument.save_info.is_display_total_mileage) {
+                // 如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
+                ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
+            } else {
+                // 如果显示的是 TRIP 里程，清空它
+                instrument.save_info.subtotal_mileage = 0;
+                instrument_info_save_enable();
+                aip3368h_display_mileage_refresh();
+                aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+            }
+        } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
+            //
+            ui_set_state(UI_STATE_SETTING_TIME_MINUTE);
+        } else if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state) {
+            ui_set_state(UI_STATE_SETTING_TIME_HOUR);
+        } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
+            ui_set_state(UI_STATE_NORMAL);
         }
 
 #if 0

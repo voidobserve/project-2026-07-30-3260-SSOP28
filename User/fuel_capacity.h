@@ -1,13 +1,14 @@
 #ifndef __FUEL_CAPACITY_H__
 #define __FUEL_CAPACITY_H__
 
-#include "include.h"   // 使用芯片官方提供的头文件
+#include "include.h"     // 使用芯片官方提供的头文件
 #include "user_config.h" // 包含自定义的头文件
 
 #if FUEL_CAPACITY_SCAN_ENABLE
 
 // 将电压值转换为油量检测点对应的ad值，单位：mV
-#define FUEL_VOLTAGE_TO_ADC_VAL(voltage) ((u16)((u32)(voltage) * 4096 / 2 / 1000))
+#define FUEL_VOLTAGE_TO_ADC_VAL(voltage)                                       \
+    ((u16)((u32)(voltage) * 4096 / 2 / 1000))
 
 // 满油量对应的电压
 #define FUEL_FULL_VOLTAGE (290)
@@ -19,24 +20,24 @@
 enum
 {
     FUEL_LEVEL_0_VOLTAGE = FUEL_EMPTY_VOLTAGE,
-    FUEL_LEVEL_1_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               1 / FUEL_LEVEL_MAX,
-    FUEL_LEVEL_2_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               2 / FUEL_LEVEL_MAX,
-    FUEL_LEVEL_3_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               3 / FUEL_LEVEL_MAX,
-    FUEL_LEVEL_4_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               4 / FUEL_LEVEL_MAX,
-    FUEL_LEVEL_5_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               5 / FUEL_LEVEL_MAX,
-    FUEL_LEVEL_6_VOLTAGE = FUEL_EMPTY_VOLTAGE -
-                           (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) *
-                               6 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_1_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 1 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_2_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 2 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_3_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 3 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_4_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 4 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_5_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 5 / FUEL_LEVEL_MAX,
+    FUEL_LEVEL_6_VOLTAGE =
+        FUEL_EMPTY_VOLTAGE -
+        (FUEL_EMPTY_VOLTAGE - FUEL_FULL_VOLTAGE) * 6 / FUEL_LEVEL_MAX,
 };
 
 // 每次计算油量的时间周期，单位：ms

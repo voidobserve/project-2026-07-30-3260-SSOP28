@@ -102,7 +102,8 @@ void main(void)
 
     // 关闭HCK和HDA的调试功能
     WDT_KEY = 0x55; // 解除写保护
-    IO_MAP &= ~0x01; // 清除这个寄存器的值，实现关闭HCK和HDA引脚的调试功能（解除映射）
+    IO_MAP &=
+        ~0x01; // 清除这个寄存器的值，实现关闭HCK和HDA引脚的调试功能（解除映射）
     WDT_KEY = 0xBB;
 
     /* 用户代码初始化接口 */
@@ -119,7 +120,7 @@ void main(void)
         // DEBUG_PIN = ~DEBUG_PIN;
 
         WDT_KEY = WDT_KEY_VAL(0xAA); // 喂狗并清除 wdt_pending
-  
+
 #if PIN_LEVEL_SCAN_ENABLE
         pin_level_scan();
 #endif
@@ -138,12 +139,13 @@ void main(void)
         fuel_capacity_scan(); // 油量检测
 #endif
 
-        bat_scan(); 
-        
+        bat_scan();
+
 #if ENGINE_SPEED_SCAN_ENABLE
         engine_speed_scan(); // 检测发动机转速
-#endif 
+#endif
 
+        instrument_info_save_handle();
         ui_display_handle();
     }
 }

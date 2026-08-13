@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   TMR1                                                              08/11/2026 18:57:03 PAGE 1   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/13/2026 17:54:51 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TMR1
@@ -22,8 +22,8 @@ line level    source
   11          #include "ui.h"
   12          
   13          #if USER_DEBUG_ENABLE
-              #include "aip1302.h" // TEST ONLY 测试完成后，应该删除
-              #endif
+  14          #include "aip1302.h" // TEST ONLY 测试完成后，应该删除
+  15          #endif
   16          
   17          // 定时器定时周期 (单位:Hz)
   18          // 周期值 = 系统时钟 / 定时器分频 / 频率 - 1
@@ -62,7 +62,7 @@ line level    source
   51   1          TMR1_CONL |= TMR_SOURCE_SEL(0x06);    // 配置定时器的时钟源，使用系统时钟
   52   1      
   53   1          __EnableIRQ(TMR1_IRQn); // 使能中断
-C51 COMPILER V9.60.7.0   TMR1                                                              08/11/2026 18:57:03 PAGE 2   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/13/2026 17:54:51 PAGE 2   
 
   54   1          // IE_EA = 1;              // 打开总中断
   55   1      }
@@ -126,7 +126,7 @@ line level    source
  113   2              // aip3368h_display_fuel_lev_upper_marker_test_1ms_isr();
  114   2              // aip3368h_display_fuel_lev_test_1ms_isr();
  115   2              // aip3368h_display_speed_test_1ms_isr();
-C51 COMPILER V9.60.7.0   TMR1                                                              08/11/2026 18:57:03 PAGE 3   
+C51 COMPILER V9.60.7.0   TMR1                                                              08/13/2026 17:54:51 PAGE 3   
 
  116   2              // aip3368h_display_speed_split_line_light_test_1ms_isr();
  117   2              // aip3368h_display_mileage_test_1ms_isr();

@@ -4,6 +4,7 @@
 #if IC_1302_ENABLE
 
 volatile aip1302_info_t aip1302_info = {0};
+volatile u16 aip1302_update_time_interval = 0;
 
 static u8 aip1302_is_working(void); // 函数声明
 
@@ -79,7 +80,7 @@ void aip1302_config(void)
         aip1302_write_byte(AIP1302_DATE_REG_ADDR, 1);  // 1日
         // aip1302_write_byte(AIP1302_WEEKDAY_REG_ADDR, 1); // 星期1
         aip1302_write_byte(AIP1302_MIN_REG_ADDR, 0);  // 0分
-        aip1302_write_byte(AIP1302_HOUR_REG_ADDR, 0); // 最高位清零,对应24小时制
+        aip1302_write_byte(AIP1302_HOUR_REG_ADDR, 12); // 最高位清零,对应24小时制
         aip1302_write_byte(AIP1302_SEC_REG_ADDR, 0); // 函数内部也会把最高位清零，秒寄存器最高位清零后，时钟ic开始振荡，跑时间
 
         // aip1302_info.year = (u16)2025;

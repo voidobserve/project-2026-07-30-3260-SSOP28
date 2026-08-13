@@ -15,14 +15,20 @@ BraceWrapping:
   BeforeElse: false
   BeforeWhile: false
   AfterControlStatement: Never
+
 # 缩进与制表符设置
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
+
 # 行宽与超长惩罚
 ColumnLimit: 80
 # 每行字符数超过限制时，每超过一个字符，增加的惩罚。0：不进行惩罚
 PenaltyExcessCharacter: 100
+# 自动重排注释
+ReflowComments: false
+
+
 # 指针符号对齐
 PointerAlignment: Right
 # 控制语句前是否空格
@@ -31,8 +37,9 @@ SpaceBeforeParens: ControlStatements
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
-# 宏和连续赋值的对齐策略
-AlignConsecutiveMacros: false
+# 宏的对齐
+AlignConsecutiveMacros: true
+# 连续赋值对齐
 AlignConsecutiveAssignments: false
 # 额外的 for-each 与语句宏
 ForEachMacros: []

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 1   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/13/2026 17:54:52 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE IO_KEY
@@ -62,7 +62,7 @@ line level    source
   50          void io_key_config(void)
   51          {
   52   1          // P0_PU |= GPIO_P07_PULL_UP(0x01);      // 上拉
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 2   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/13/2026 17:54:52 PAGE 2   
 
   53   1          P0_MD1 &= ~(GPIO_P07_MODE_SEL(0x03)); // 输入模式
   54   1      }
@@ -119,27 +119,34 @@ line level    source
  105   1          switch (io_key_event) {
  106   2          case KEY_EVENT_CLICK:
  107   2      #if USER_DEBUG_ENABLE
-                      // printf("click\n");
-              #endif
+ 108   2              // printf("click\n");
+ 109   2      #endif
  110   2      
  111   2              if (UI_STATE_NORMAL == ui_manager.state) {
  112   3                  // 正常显示模式下，按键单击切换显示的里程类型
  113   3                  instrument.save_info.is_display_total_mileage =
  114   3                      !instrument.save_info.is_display_total_mileage;
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 3   
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/13/2026 17:54:52 PAGE 3   
 
  115   3                  // 立即更新里程显示：
  116   3                  aip3368h_display_mileage_refresh();
- 117   3              }
- 118   2      
- 119   2      #if 0
-                              if (UI_STATE_NORMAL == ui_manager.state)
-                              {
-                                      instrument.save_info.is_display_total_mileage =
-                                              !instrument.save_info.is_display_total_mileage;
-                                      
-                                      instrument_info_save_enable();
-                              }
+ 117   3                  aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+ 118   3              } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
+ 119   3      
+ 120   3                  // 切换 单位类型
+ 121   3                  if (DISTANCE_UNIT_TYPE_METRIC ==
+ 122   3                      instrument.save_info.distance_unit_type) {
+ 123   4                      instrument.save_info.distance_unit_type =
+ 124   4                          DISTANCE_UNIT_TYPE_IMPERIAL;
+ 125   4                  } else {
+ 126   4                      instrument.save_info.distance_unit_type =
+ 127   4                          DISTANCE_UNIT_TYPE_METRIC;
+ 128   4                  } 
+ 129   3      
+ 130   3              }
+ 131   2      
+ 132   2      #if 0
+               
                               else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE ==
                                                ui_manager.state)
                               {
@@ -165,33 +172,40 @@ line level    source
                
                               }
               #endif
- 152   2      
- 153   2              ui_display_refresh();
- 154   2              break;
- 155   2          case IO_KEY_EVENT_LONG:
- 156   2      #if USER_DEBUG_ENABLE
-                      // printf("Long\n");
-              #endif
  159   2      
- 160   2              if (UI_STATE_NORMAL == ui_manager.state) {
- 161   3                  // 如果正在显示里程
- 162   3                  // if (1 == instrument.save_info.is_display_total_mileage) {
- 163   3                  //     /*
- 164   3                  //         如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
- 165   3                  //     */
- 166   3                  //     ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
- 167   3                  // } else {
- 168   3                  //     // 如果显示的是 TRIP 里程，清空它
- 169   3                  //     instrument.save_info.subtotal_mileage = 0;
- 170   3                  //     instrument_info_save_enable();
- 171   3                  // }
- 172   3              }
- 173   2      
- 174   2      #if 0
+ 160   2              ui_display_refresh();
+ 161   2              break;
+ 162   2          case IO_KEY_EVENT_LONG:
+ 163   2      #if USER_DEBUG_ENABLE
+ 164   2              // printf("Long\n");
+ 165   2      #endif
+ 166   2      
+ 167   2              if (UI_STATE_NORMAL == ui_manager.state) {
+ 168   3                  // 如果正在显示总里程
+ 169   3                  if (1 == instrument.save_info.is_display_total_mileage) {
+ 170   4                      // 如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
+ 171   4                      ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
+ 172   4                  } else {
+ 173   4                      // 如果显示的是 TRIP 里程，清空它
+ 174   4                      instrument.save_info.subtotal_mileage = 0;
+ 175   4                      instrument_info_save_enable();
+ 176   4                      aip3368h_display_mileage_refresh();
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/13/2026 17:54:52 PAGE 4   
+
+ 177   4                      aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+ 178   4                  }
+ 179   3              } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
+ 180   3                  //
+ 181   3                  ui_set_state(UI_STATE_SETTING_TIME_MINUTE);
+ 182   3              } else if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state) {
+ 183   3                  ui_set_state(UI_STATE_SETTING_TIME_HOUR);
+ 184   3              } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
+ 185   3                  ui_set_state(UI_STATE_NORMAL);
+ 186   3              }
+ 187   2      
+ 188   2      #if 0
                               if (UI_STATE_NORMAL == ui_manager.state)
                               {
-C51 COMPILER V9.60.7.0   IO_KEY                                                            08/11/2026 18:57:05 PAGE 4   
-
                                       // 如果正在显示里程
                                       if (1 == instrument.save_info.is_display_total_mileage)
                                       {
@@ -222,24 +236,26 @@ line level    source
                                       instrument_info_save_enable(); // 退出 车轮周长设置 后，保存
                               }
               #endif
- 207   2      
- 208   2              ui_display_refresh();
- 209   2      
- 210   2              break;
- 211   2      
- 212   2          default:
- 213   2              break;
- 214   2          }
- 215   1      }
- 216          
- 217          #endif
+ 221   2      
+ 222   2              ui_display_refresh();
+ 223   2      
+ 224   2              break;
+ 225   2      
+ 226   2          default:
+ 227   2              break;
+ 228   2          }
+ 229   1      }
+ 230          
+ 231          #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    166    ----
+   CODE SIZE        =    276    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =     24    ----
    PDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.7.0   IO_KEY                                                            08/13/2026 17:54:52 PAGE 5   
+
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----

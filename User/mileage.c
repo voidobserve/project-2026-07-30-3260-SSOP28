@@ -10,8 +10,9 @@ volatile u32 distance;
 // 里程更新的时间计数,每隔一段时间更新一次当前里程（负责控制发送里程的周期）
 volatile u16 mileage_update_time_cnt;
 
-static void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
+void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
 {
+    // TODO 这里会跟ui设置时有冲突
     if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
         aip3368h_display_miles_light(0);
         aip3368h_display_km_light(1);
@@ -24,7 +25,6 @@ static void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
 static void aip3368h_display_mileage_value(u32 mileage_value, u8 display_mode)
 {
     u8 is_trip_mode = (MILEAGE_DISPLAY_MODE_TRIP == display_mode);
-
     if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
         // 使用 公制 单位
         aip3368h_display_mileage(mileage_value / (is_trip_mode ? 100u : 1000u),
@@ -37,9 +37,6 @@ static void aip3368h_display_mileage_value(u32 mileage_value, u8 display_mode)
         aip3368h_display_mileage(mileage_value / (is_trip_mode ? 161u : 1610u),
                                  display_mode);
     }
-
-    aip3368h_display_mileage_unit_lights(
-        instrument.save_info.distance_unit_type);
 }
 
 static void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
@@ -49,7 +46,7 @@ static void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
 }
 
 /**
- * @brief 刷新显示的里程（TOTAL 或 TRIP），会刷新单位、TRIP和ODO对应的指示灯
+ * @brief 刷新显示的里程（TOTAL 或 TRIP），TRIP和ODO对应的指示灯
  *
  */
 void aip3368h_display_mileage_refresh(void)
@@ -154,6 +151,7 @@ void aip3368h_display_mileage_handle(void)
         }
 
         aip3368h_display_mileage_refresh();
+        aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
     }
 
     if (mileage_update_time_cnt >= MILEAGE_UPDATE_TIME_MS) {

@@ -5,6 +5,8 @@
 
 #include "user_config.h"
 
+#include "aip1302.h" // aip1302_info_t
+
 /**
  * @brief 7段数码管段码定义 (a,b,c,d,e,f,g)
  *        对应二进制位: bit0=a, bit1=b, bit2=c, bit3=d, bit4=e, bit5=f, bit6=g
@@ -252,6 +254,7 @@ void __aip3368h_display_engine_speed_gear__(u8 idx, u8 is_display)
  *
  *      0：空挡，清空显示
  *      1：1挡，显示1格
+ *      如果传参超出范围，只会显示到第 27 格
  *
  */
 void aip3368h_display_engine_speed_gear(u8 gear)
@@ -297,6 +300,7 @@ void __aip3368h_display_engine_speed_scale_bar__(u8 idx, u8 is_display)
     }
 }
 
+#if 0
 /**
  * @brief 显示指定的发动机转速对应的刻度条
  *
@@ -307,7 +311,6 @@ void __aip3368h_display_engine_speed_scale_bar__(u8 idx, u8 is_display)
  */
 void aip3368h_display_engine_speed_scale_bar(u8 scale)
 {
-    // 清空原来的显示
     u8 i;
 
     for (i = 0; i < ARRAY_SIZE(engine_speed_scale_map); i++) {
@@ -322,6 +325,23 @@ void aip3368h_display_engine_speed_scale_bar(u8 scale)
             aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i]
                                                          .buff_index] |=
                 (0x01 << engine_speed_scale_map[i].bit_offset);
+        }
+    }
+}
+#endif
+
+void aip3368h_display_engine_speed_scale_bar(u8 is_display)
+{
+    u8 i;
+    for (i = 0; i < ARRAY_SIZE(engine_speed_scale_map); i++) {
+        if (is_display) {
+            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i]
+                                                         .buff_index] |=
+                (0x01 << engine_speed_scale_map[i].bit_offset);
+        } else {
+            aip3368h_engine_speed_panel_display_buff[engine_speed_scale_map[i]
+                                                         .buff_index] &=
+                ~(0x01 << engine_speed_scale_map[i].bit_offset);
         }
     }
 }
@@ -709,6 +729,88 @@ void aip3368h_display_time(u8 hour, u8 min)
     __aip3368h_display_hour_digit__(1, hour / 10);
     __aip3368h_display_minute_digit__(0, min % 10);
     __aip3368h_display_minute_digit__(1, min / 10);
+}
+
+/**
+ * @brief 在设置时间时，显示当前设置的时间的指定位
+ * 
+ * @param is_display 是否显示
+ * 
+ * @param num 要显示的数字 
+ *          如果在设置分钟，范围：0 ~ 59
+ *          如果在设置小时，范围：0 ~ 23
+ * 
+ * @param is_setting_min 当前是否在设置分钟
+ * 
+ */
+void aip3368h_display_time_digits_when_setting(u8 is_display, u8 num,
+                                               u8 is_setting_min)
+{
+    u8 i;
+
+    if (is_display) {
+        if (is_setting_min) {
+            __aip3368h_display_minute_digit__(0, num % 10);
+            __aip3368h_display_minute_digit__(1, num / 10);
+        } else {
+            __aip3368h_display_hour_digit__(0, num % 10);
+            __aip3368h_display_hour_digit__(1, num / 10);
+        }
+    } else {
+        // 如果需要清空显示
+
+        if (is_setting_min) {
+            // 遍历 a ~ g 段数码管，清空显示
+            for (i = 0; i < 7; i++) {
+                aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+                                                             .buff_index] &=
+                    ~(0x01 << minute_bit_0_map[i].bit_offset);
+                aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+                                                             .buff_index] &=
+                    ~(0x01 << minute_bit_1_map[i].bit_offset);
+            }
+        } else {
+            // 遍历 a ~ g 段数码管，清空显示
+            for (i = 0; i < 7; i++) {
+                aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+                                                             .buff_index] &=
+                    ~(0x01 << hour_bit_0_map[i].bit_offset);
+                aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+                                                             .buff_index] &=
+                    ~(0x01 << hour_bit_1_map[i].bit_offset);
+            }
+        }
+    }
+}
+
+/**
+ * @brief 在设置时间时，显示当前设置的时间
+ * 
+ * @param is_display 是否显示
+ * 
+ * @param aip1302_info 存放时间信息的结构体变量
+ * 
+ * @param 当前是否在设置分钟
+ *          0 ： 当前在设置小时
+ *          1 ： 当前在设置分钟 
+ * 
+ */
+void aip3368h_display_time_when_setting(u8 is_display,
+                                        aip1302_info_t aip1302_info,
+                                        u8 is_setting_min)
+{
+    if (is_display) {
+        if (is_setting_min) {
+            aip3368h_display_time(aip1302_info.time_hour,
+                                  aip1302_info.time_min);
+        } else {
+        }
+    } else {
+        if (is_setting_min) {
+            aip3368h_display_time(0, 0);
+        } else {
+        }
+    }
 }
 
 /**

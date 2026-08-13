@@ -2,9 +2,7 @@
 #define __KEY_DRIVER_H__
 
 #include "user_config.h"
-
-#if (IO_KEY_ENABLE)
-
+ 
 #include "typedef.h"
 
 #define NO_KEY (255) // 无效按键的键值
@@ -60,7 +58,6 @@ typedef struct key_driver_para
 
 extern void key_driver_scan(void *_scan_para);
 // extern struct key_driver_para key_driver_scan(struct key_driver_para scan_para);
-
-#endif // #if (TOUCH_KEY_ENABLE  || AD_KEY_ENABLE)
+ 
 
 #endif
