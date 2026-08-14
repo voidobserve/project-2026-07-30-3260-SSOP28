@@ -69,14 +69,16 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num);
 void aip3368h_display_time_colon_light(u8 is_display);
 void aip3368h_display_time(u8 hour, u8 minute);
 void aip3368h_display_time_digits_when_setting(u8 is_display, u8 num,
-                                               u8 is_setting_min);
+                                               u8 is_setting_min);                                               
 
 void aip3368h_display_fuel_empty_light(u8 is_display);
 void aip3368h_display_fuel_icon_light(u8 is_display);
 void aip3368h_display_fuel_full_light(u8 is_display);
 
 void __aip3368h_display_fuel_lev_upper_marker__(u8 idx, u8 is_display);
+#if 0
 void aip3368h_display_fuel_lev_upper_marker(u8 is_display);
+#endif
 
 void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display);
 void aip3368h_display_fuel_lev(u8 lev);
@@ -91,7 +93,9 @@ void aip3368h_display_mph_light(u8 is_display);
 void aip3368h_display_kmh_light(u8 is_display);
 
 void __aip3368h_display_speed_split_line_light__(u8 idx, u8 is_display);
+#if 0
 void aip3368h_display_speed_split_line_light(u8 is_display);
+#endif
 
 void aip3368h_display_trip_light(u8 is_display);
 void aip3368h_display_odo_light(u8 is_display);
@@ -107,7 +111,9 @@ void aip3368h_display_battery_icon_light(u8 is_display);
 void aip3368h_display_battery_16_symbol_light(u8 is_display);
 
 void __aip3368h_display_bat_lev_upper_marker_light__(u8 idx, u8 is_display);
+#if 0
 void aip3368h_display_bat_lev_upper_marker_light(u8 is_display);
+#endif
 
 void __aip3368h_display_bat_lev_light__(u8 idx, u8 is_display);
 void aip3368h_display_bat_lev_light(u8 bat_lev);

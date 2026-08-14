@@ -112,7 +112,7 @@ void main(void)
     ui_manager_init();
 
     // 上电之后，需要先跑一遍开机动画，再继续主循环
-    // boot_animation_process();
+    boot_animation_process();
 
     /* 系统主循环 */
     while (1) {

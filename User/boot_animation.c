@@ -34,8 +34,10 @@ void __boot_animation_phase_0__(void)
     static volatile u8 dir_of_speed_panel = 0;        // 动画方向
     static volatile u8 dir_of_engine_speed_panel = 0; // 动画方向
 
-    static volatile u8 idx_of_speed_panel = 0; // 指示灯的索引值（在时速面板上使用）
-    static volatile u8 idx_of_engine_speed_panel = 0; // 指示灯的索引值（在发动机面板上使用）
+    static volatile u8 idx_of_speed_panel =
+        0; // 指示灯的索引值（在时速面板上使用）
+    static volatile u8 idx_of_engine_speed_panel =
+        0; // 指示灯的索引值（在发动机面板上使用）
 
     static volatile u8 step_of_speed_panel = 0;        // 当前xx的动画步骤
     static volatile u8 step_of_engine_speed_panel = 0; // 当前xx的动画步骤
@@ -79,15 +81,18 @@ void __boot_animation_phase_0__(void)
         // boot_animation_param.animation_phase = BOOT_ANIMATION_PHASE_END;
     } else {
         step_of_speed_panel++;
-        if (step_of_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT) {
+        if (step_of_speed_panel >=
+            BOOT_ANIMATION_PHASE_0_PERIOD_OF_SPEED_SPLIT_LINE_LIGHT) {
             step_of_speed_panel = 0;
             if (0 == dir_of_speed_panel) {
                 // 时速面板上的分割线，7个灯组成流水，不堆积
 
                 if (idx_of_speed_panel < 8) {
-                    __aip3368h_display_speed_split_line_light__(idx_of_speed_panel, 1);
+                    __aip3368h_display_speed_split_line_light__(
+                        idx_of_speed_panel, 1);
                 } else {
-                    __aip3368h_display_speed_split_line_light__(idx_of_speed_panel - 8, 0);
+                    __aip3368h_display_speed_split_line_light__(
+                        idx_of_speed_panel - 8, 0);
                 }
 
                 idx_of_speed_panel++;
@@ -96,9 +101,11 @@ void __boot_animation_phase_0__(void)
                 }
             } else {
                 if (idx_of_speed_panel >= 8) {
-                    __aip3368h_display_speed_split_line_light__(idx_of_speed_panel - 8, 1);
+                    __aip3368h_display_speed_split_line_light__(
+                        idx_of_speed_panel - 8, 1);
                 } else {
-                    __aip3368h_display_speed_split_line_light__(idx_of_speed_panel, 0);
+                    __aip3368h_display_speed_split_line_light__(
+                        idx_of_speed_panel, 0);
                 }
 
                 idx_of_speed_panel--;
@@ -122,7 +129,8 @@ void __boot_animation_phase_0__(void)
             */
             idx_of_engine_speed_panel = 5 * 2;
         }
-    } else if (1 == dir_of_engine_speed_panel && idx_of_engine_speed_panel == 0) {
+    } else if (1 == dir_of_engine_speed_panel &&
+               idx_of_engine_speed_panel == 0) {
         /*
             dir == 1，idx_of_engine_speed_panel == 0
         */
@@ -131,26 +139,33 @@ void __boot_animation_phase_0__(void)
     } else {
         step_of_engine_speed_panel++;
 
-        if (0 == dir_of_engine_speed_panel && (step_of_engine_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_ENGINE_SPEED_SCALE_BAR)) {
+        if (0 == dir_of_engine_speed_panel &&
+            (step_of_engine_speed_panel >=
+             BOOT_ANIMATION_PHASE_0_PERIOD_OF_ENGINE_SPEED_SCALE_BAR)) {
             step_of_engine_speed_panel = 0;
 
             // 发动机转速的刻度线，流水动画，不堆积
             if (idx_of_engine_speed_panel < 18) {
-                __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_panel, 1);
+                __aip3368h_display_engine_speed_scale_bar__(
+                    idx_of_engine_speed_panel, 1);
             } else {
-                __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_panel - 18, 0);
+                __aip3368h_display_engine_speed_scale_bar__(
+                    idx_of_engine_speed_panel - 18, 0);
             }
 
             idx_of_engine_speed_panel++;
             if (idx_of_engine_speed_panel >= 18 * 2) {
                 dir_of_engine_speed_panel = 1;
             }
-        } else if (step_of_engine_speed_panel >= BOOT_ANIMATION_PHASE_0_PERIOD_OF_FUEL_UPPER_MARKER) {
+        } else if (step_of_engine_speed_panel >=
+                   BOOT_ANIMATION_PHASE_0_PERIOD_OF_FUEL_UPPER_MARKER) {
             step_of_engine_speed_panel = 0;
             if (idx_of_engine_speed_panel >= 6) {
-                __aip3368h_display_fuel_lev_upper_marker__(idx_of_engine_speed_panel - 5, 1);
+                __aip3368h_display_fuel_lev_upper_marker__(
+                    idx_of_engine_speed_panel - 5, 1);
             } else {
-                __aip3368h_display_fuel_lev_upper_marker__(idx_of_engine_speed_panel, 0);
+                __aip3368h_display_fuel_lev_upper_marker__(
+                    idx_of_engine_speed_panel, 0);
             }
 
             idx_of_engine_speed_panel--;
@@ -181,8 +196,10 @@ void __boot_animation_phase_1__(void)
     static volatile u8 num = 0;
     static volatile u8 step = 0;
 
-    static volatile u8 step_of_engine_speed_gear = 0; // 发动机转速挡位对应的动画步骤
-    static volatile u8 step_of_engine_speed_scale_bar = 0; // 发动机转速刻度线对应的动画步骤
+    static volatile u8 step_of_engine_speed_gear =
+        0; // 发动机转速挡位对应的动画步骤
+    static volatile u8 step_of_engine_speed_scale_bar =
+        0;                                     // 发动机转速刻度线对应的动画步骤
     static volatile u8 step_of_exit_phase = 0; // 退出当前动画阶段的步骤
 
     static volatile u8 idx_of_bat_lev = 0;
@@ -191,9 +208,11 @@ void __boot_animation_phase_1__(void)
 
     static volatile u8 idx_of_fuel_lev = 0; // 油量格数对应的指示灯索引值
     static volatile u8 idx_of_engine_speed_gear = 0;
-    static volatile u8 idx_of_engine_speed_scale_bar = 0; // 发动机转速刻度线对应的指示灯索引值
+    static volatile u8 idx_of_engine_speed_scale_bar =
+        0; // 发动机转速刻度线对应的指示灯索引值
 
-    static volatile u8 dir_of_engine_speed_gear = 0; // 发动机转速挡位动画的方向，0：上升，1：下降
+    static volatile u8 dir_of_engine_speed_gear =
+        0; // 发动机转速挡位动画的方向，0：上升，1：下降
 
     if (boot_animation_param.animation_phase != BOOT_ANIMATION_PHASE_1) {
         return;
@@ -253,7 +272,8 @@ void __boot_animation_phase_1__(void)
         __aip3368h_display_minute_digit__(0, num);
         __aip3368h_display_minute_digit__(1, num);
 
-        __aip3368h_display_engine_speed_split_line_light__(idx_of_scale_bar_light, 1);
+        __aip3368h_display_engine_speed_split_line_light__(
+            idx_of_scale_bar_light, 1);
         __aip3368h_display_speed_split_line_light__(idx_of_scale_bar_light, 1);
 
         __aip3368h_display_fuel_lev_upper_marker__(idx_of_upper_marker, 1);
@@ -293,7 +313,9 @@ void __boot_animation_phase_1__(void)
             dir_of_engine_speed_gear = 1;
             step_of_engine_speed_gear = 0;
         }
-    } else if (0 == dir_of_engine_speed_gear && step_of_engine_speed_gear >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR) {
+    } else if (0 == dir_of_engine_speed_gear &&
+               step_of_engine_speed_gear >=
+                   BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR) {
         step_of_engine_speed_gear = 0;
 
         __aip3368h_display_engine_speed_gear__(idx_of_engine_speed_gear, 1);
@@ -302,7 +324,8 @@ void __boot_animation_phase_1__(void)
             idx_of_engine_speed_gear++;
         }
     } else if (dir_of_engine_speed_gear == 1) {
-        if (step_of_engine_speed_gear >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR_DOWN) {
+        if (step_of_engine_speed_gear >=
+            BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_GEAR_DOWN) {
             step_of_engine_speed_gear = 0;
             __aip3368h_display_engine_speed_gear__(idx_of_engine_speed_gear, 0);
 
@@ -313,10 +336,12 @@ void __boot_animation_phase_1__(void)
     }
 
     step_of_engine_speed_scale_bar++;
-    if (step_of_engine_speed_scale_bar >= BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_SCALE_BAR) {
+    if (step_of_engine_speed_scale_bar >=
+        BOOT_ANIMATION_PHASE_1_PERIOD_OF_ENGINE_SPEED_SCALE_BAR) {
         step_of_engine_speed_scale_bar = 0;
 
-        __aip3368h_display_engine_speed_scale_bar__(idx_of_engine_speed_scale_bar, 1);
+        __aip3368h_display_engine_speed_scale_bar__(
+            idx_of_engine_speed_scale_bar, 1);
 
         if (idx_of_engine_speed_scale_bar > 0) {
             idx_of_engine_speed_scale_bar--;
@@ -355,23 +380,7 @@ void boot_animation_process(void)
 
         if (BOOT_ANIMATION_PHASE_END == boot_animation_param.animation_phase) {
             // 开机动画结束，根据存储的参数，立即更新显示
-
-            // TODO 可以交给后续的功能来更新显示，不用在这里立即显示
-
-            // TODO 在这里根据存储的参数，立即更新显示
-
-            // aip3368h_display_speed(0);
-
-            // TODO 需要判断存储的参数是 km/h 还是 mph
-            aip3368h_display_mph_light(0);
-            aip3368h_display_kmh_light(0);
-
-            // TODO 需要判断存储的参数是 ODO 还是 TRIP
-            aip3368h_display_trip_light(0);
-            aip3368h_display_odo_light(0);
-
-            // TODO 检测电池电压，根据电压显示电池电量
-
+            // 可以交给后续的功能来更新显示，不用在这里立即显示
             boot_animation_param.is_in_boot_animation = 0;
         }
 

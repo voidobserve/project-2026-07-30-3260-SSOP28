@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 1   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE AIP1302
@@ -62,7 +62,7 @@ line level    source
   51   1          P0_MD0 &= ~GPIO_P02_MODE_SEL(0x3); // 清空配置
   52   1          P0_MD0 |= GPIO_P02_MODE_SEL(0x1);  // 输出模式
   53   1          FOUT_S02 = GPIO_FOUT_AF_FUNC;
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 2   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 2   
 
   54   1      
   55   1          AIP1302_CE_PIN = 0;   // 空闲时为低电平
@@ -77,15 +77,15 @@ line level    source
   63   1          if (ret) {
   64   2      // 如果时钟芯片aip1302的晶振正在运行
   65   2      #if USER_DEBUG_ENABLE
-  66   2              printf("aip1302 is working\n");
-  67   2              printf("1302 is not first power on\n");
-  68   2      #endif
+                      printf("aip1302 is working\n");
+                      printf("1302 is not first power on\n");
+              #endif
   69   2          } else {
   70   2      // 如果时钟芯片aip1302的晶振不在运行
   71   2      #if USER_DEBUG_ENABLE
-  72   2              printf("aip1302 is sleep\n");
-  73   2              printf("1302 is first power on\n");
-  74   2      #endif
+                      printf("aip1302 is sleep\n");
+                      printf("1302 is first power on\n");
+              #endif
   75   2              // aip1302上电复位后，默认不跑时钟，这里要配置它开始跑时钟
   76   2      
   77   2              // 设置一个非 2000 年的时间，之后上电读取时，表示不是第一次上电
@@ -126,7 +126,7 @@ line level    source
                   // aip1302_info.month = 7;
                   // aip1302_info.day = 2;
                   // aip1302_info.time_hour = 13;
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 3   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 3   
 
                   // aip1302_info.time_min = 30;
                   // aip1302_info.time_sec = 30;
@@ -190,7 +190,7 @@ line level    source
  173   3                  tmp &= ~0xC0;
  174   3              } else if ((AIP1302_MONTH_REG_ADDR + 1) == cmd) {
  175   3                  // 月寄存器，bit7~5未使用
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 4   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 4   
 
  176   3                  tmp &= ~0xE0;
  177   3              }
@@ -254,7 +254,7 @@ line level    source
  235   1      }
  236          
  237          /**
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 5   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 5   
 
  238           * @brief aip1302写一个字节，函数内部的数据传输是LSB，低位先行
  239           *          函数内部会根据命令，对读出的数据做好转换
@@ -318,7 +318,7 @@ line level    source
  297   1          AIP1302_DELAY(); // 等待电平信号稳定
  298   1          AIP1302_CE_PIN = 0;
  299   1          AIP1302_DATA_PIN = 0;
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 6   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 6   
 
  300   1      }
  301          
@@ -382,7 +382,7 @@ line level    source
  355   1          if (cmd == AIP1302_SEC_REG_ADDR || cmd == AIP1302_MIN_REG_ADDR || cmd == AIP1302_HOUR_REG_ADDR || cmd 
              -== AIP1302_DATE_REG_ADDR || cmd == AIP1302_MONTH_REG_ADDR || cmd == AIP1302_YEAR_REG_ADDR) {
  356   2              u8 tens_place = 0; // 十位
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 7   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 7   
 
  357   2              u8 one_place = 0;  // 个位
  358   2              if (tmp >= 10) {
@@ -446,7 +446,7 @@ line level    source
               
                       // ret = aip1302_read_byte(AIP1302_WEEKDAY_REG_ADDR + 1);
                       // printf("weekday %bu ", ret);
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 8   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 8   
 
               
                       ret = aip1302_read_byte(AIP1302_HOUR_REG_ADDR + 1);
@@ -510,7 +510,7 @@ line level    source
  477   1          aip1302_info.time_sec = aip1302_read_byte(AIP1302_SEC_REG_ADDR + 1);
  478   1          aip1302_info.time_min = aip1302_read_byte(AIP1302_MIN_REG_ADDR + 1);
  479   1          aip1302_info.time_hour = aip1302_read_byte(AIP1302_HOUR_REG_ADDR + 1);
-C51 COMPILER V9.60.7.0   AIP1302                                                           08/13/2026 15:38:11 PAGE 9   
+C51 COMPILER V9.60.7.0   AIP1302                                                           08/14/2026 11:02:16 PAGE 9   
 
  480   1          aip1302_info.day = aip1302_read_byte(AIP1302_DATE_REG_ADDR + 1);
  481   1          aip1302_info.month = aip1302_read_byte(AIP1302_MONTH_REG_ADDR + 1);
@@ -564,8 +564,8 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1027    ----
-   CONSTANT SIZE    =     90    ----
+   CODE SIZE        =    993    ----
+   CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =      9      21
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----

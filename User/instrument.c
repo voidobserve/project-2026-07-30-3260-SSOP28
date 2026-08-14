@@ -55,7 +55,6 @@ void instrument_info_save(void)
                   sizeof(save_info_t));
 
 #if USER_DEBUG_ENABLE
-// TODO 需要测试一下，看看是否能正常写入
 // printf("instrument info save\n");
 #endif
 

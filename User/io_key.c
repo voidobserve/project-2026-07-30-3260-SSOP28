@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "instrument.h"
 #include "mileage.h"
+#include "aip1302.h"
 
 #if IO_KEY_ENABLE
 
@@ -112,9 +113,7 @@ void io_key_handle(void)
             // 正常显示模式下，按键单击切换显示的里程类型
             instrument.save_info.is_display_total_mileage =
                 !instrument.save_info.is_display_total_mileage;
-            // 立即更新里程显示：
-            aip3368h_display_mileage_refresh();
-            aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+            instrument_info_save_enable();
         } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
 
             // 切换 单位类型
@@ -125,11 +124,19 @@ void io_key_handle(void)
             } else {
                 instrument.save_info.distance_unit_type =
                     DISTANCE_UNIT_TYPE_METRIC;
-            } 
-
-            // 清空闪烁的时间计数
-            ui_manager.blink_timer_cnt = 0; 
-            ui_manager.blink_dir = 0;
+            }
+        } else if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state) {
+            // 在设置分钟时，检测到短按
+            aip1302_info.time_min++;
+            if (aip1302_info.time_min > 59) {
+                aip1302_info.time_min = 0;
+            }
+        } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
+            // 在设置小时时，检测到短按
+            aip1302_info.time_hour++;
+            if (aip1302_info.time_hour > 23) {
+                aip1302_info.time_hour = 0;
+            }
         }
 
 #if 0
@@ -171,20 +178,23 @@ void io_key_handle(void)
             // 如果正在显示总里程
             if (1 == instrument.save_info.is_display_total_mileage) {
                 // 如果显示的是 TOTAL 里程，切换到设置要显示的单位类型
-                ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);
+                ui_set_state(UI_STATE_SETTING_DISTANCE_UNIT_TYPE);                
             } else {
                 // 如果显示的是 TRIP 里程，清空它
                 instrument.save_info.subtotal_mileage = 0;
                 instrument_info_save_enable();
                 aip3368h_display_mileage_refresh();
-                aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+                aip3368h_display_mileage_unit_lights(
+                    instrument.save_info.distance_unit_type);
             }
         } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
             //
             ui_set_state(UI_STATE_SETTING_TIME_MINUTE);
         } else if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state) {
+            aip1302_update_time(aip1302_info);
             ui_set_state(UI_STATE_SETTING_TIME_HOUR);
         } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
+            aip1302_update_time(aip1302_info);
             ui_set_state(UI_STATE_NORMAL);
         }
 

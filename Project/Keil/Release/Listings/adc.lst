@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   ADC                                                               08/13/2026 11:48:27 PAGE 1   
+C51 COMPILER V9.60.7.0   ADC                                                               08/14/2026 11:02:15 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ADC
@@ -62,7 +62,7 @@ line level    source
   51   2              break;
   52   2      
   53   2          case ADC_CHANNEL_BATTERY:
-C51 COMPILER V9.60.7.0   ADC                                                               08/13/2026 11:48:27 PAGE 2   
+C51 COMPILER V9.60.7.0   ADC                                                               08/14/2026 11:02:15 PAGE 2   
 
   54   2      
   55   2              ADC_ACON1 |= (0x01 << 6) |         // 使能ADC内部参考信号
@@ -126,7 +126,7 @@ line level    source
  113   2                  刚上电（adc_channel_status == ADC_CHANNEL_STATUS_NONE），
  114   2                  或者是adc一轮扫描结束
  115   2              */
-C51 COMPILER V9.60.7.0   ADC                                                               08/13/2026 11:48:27 PAGE 3   
+C51 COMPILER V9.60.7.0   ADC                                                               08/14/2026 11:02:15 PAGE 3   
 
  116   2          case ADC_CHANNEL_STATUS_NONE:
  117   2          case ADC_CHANNEL_STATUS_SEL_BATTERY_END:

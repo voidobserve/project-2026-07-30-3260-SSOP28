@@ -11,8 +11,7 @@ volatile u32 distance;
 volatile u16 mileage_update_time_cnt;
 
 void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
-{
-    // TODO 这里会跟ui设置时有冲突
+{ 
     if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
         aip3368h_display_miles_light(0);
         aip3368h_display_km_light(1);

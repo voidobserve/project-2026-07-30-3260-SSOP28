@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MILEAGE                                                           08/13/2026 17:54:51 PAGE 1   
+C51 COMPILER V9.60.7.0   MILEAGE                                                           08/14/2026 16:22:47 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MILEAGE
@@ -23,162 +23,160 @@ line level    source
   11          volatile u16 mileage_update_time_cnt;
   12          
   13          void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
-  14          {
-  15   1          // TODO 这里会跟ui设置时有冲突
-  16   1          if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
-  17   2              aip3368h_display_miles_light(0);
-  18   2              aip3368h_display_km_light(1);
-  19   2          } else if (DISTANCE_UNIT_TYPE_IMPERIAL == distance_unit_type) {
-  20   2              aip3368h_display_km_light(0);
-  21   2              aip3368h_display_miles_light(1);
-  22   2          }
-  23   1      }
-  24          
-  25          static void aip3368h_display_mileage_value(u32 mileage_value, u8 display_mode)
-  26          {
-  27   1          u8 is_trip_mode = (MILEAGE_DISPLAY_MODE_TRIP == display_mode);
-  28   1      
-  29   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
-  30   2              // 使用 公制 单位
-  31   2              aip3368h_display_mileage(mileage_value / (is_trip_mode ? 100u : 1000u),
-  32   2                                       display_mode);
-  33   2          } else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
-  34   1                     instrument.save_info.distance_unit_type) {
-  35   2              // 使用 英制 单位
-  36   2              // 1km == 0.621427mile
-  37   2              // 0.621427 mile * 1610 == 1000.49747 m
-  38   2              aip3368h_display_mileage(mileage_value / (is_trip_mode ? 161u : 1610u),
-  39   2                                       display_mode);
-  40   2          }
-  41   1      }
-  42          
-  43          static void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
-  44          {
-  45   1          aip3368h_display_trip_light(is_display_total_mileage ? 0 : 1);
-  46   1          aip3368h_display_odo_light(is_display_total_mileage ? 1 : 0);
-  47   1      }
-  48          
-  49          /**
-  50           * @brief 刷新显示的里程（TOTAL 或 TRIP），TRIP和ODO对应的指示灯
-  51           *
-  52           */
-C51 COMPILER V9.60.7.0   MILEAGE                                                           08/13/2026 17:54:51 PAGE 2   
+  14          { 
+  15   1          if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
+  16   2              aip3368h_display_miles_light(0);
+  17   2              aip3368h_display_km_light(1);
+  18   2          } else if (DISTANCE_UNIT_TYPE_IMPERIAL == distance_unit_type) {
+  19   2              aip3368h_display_km_light(0);
+  20   2              aip3368h_display_miles_light(1);
+  21   2          }
+  22   1      }
+  23          
+  24          static void aip3368h_display_mileage_value(u32 mileage_value, u8 display_mode)
+  25          {
+  26   1          u8 is_trip_mode = (MILEAGE_DISPLAY_MODE_TRIP == display_mode);
+  27   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
+  28   2              // 使用 公制 单位
+  29   2              aip3368h_display_mileage(mileage_value / (is_trip_mode ? 100u : 1000u),
+  30   2                                       display_mode);
+  31   2          } else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
+  32   1                     instrument.save_info.distance_unit_type) {
+  33   2              // 使用 英制 单位
+  34   2              // 1km == 0.621427mile
+  35   2              // 0.621427 mile * 1610 == 1000.49747 m
+  36   2              aip3368h_display_mileage(mileage_value / (is_trip_mode ? 161u : 1610u),
+  37   2                                       display_mode);
+  38   2          }
+  39   1      }
+  40          
+  41          static void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
+  42          {
+  43   1          aip3368h_display_trip_light(is_display_total_mileage ? 0 : 1);
+  44   1          aip3368h_display_odo_light(is_display_total_mileage ? 1 : 0);
+  45   1      }
+  46          
+  47          /**
+  48           * @brief 刷新显示的里程（TOTAL 或 TRIP），TRIP和ODO对应的指示灯
+  49           *
+  50           */
+  51          void aip3368h_display_mileage_refresh(void)
+  52          {
+C51 COMPILER V9.60.7.0   MILEAGE                                                           08/14/2026 16:22:47 PAGE 2   
 
-  53          void aip3368h_display_mileage_refresh(void)
-  54          {
-  55   1          u8 is_display_total_mileage = instrument.save_info.is_display_total_mileage;
-  56   1          u32 mileage_value = is_display_total_mileage
-  57   1                                  ? instrument.save_info.total_mileage
-  58   1                                  : instrument.save_info.subtotal_mileage;
-  59   1          u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
-  60   1                                                     : MILEAGE_DISPLAY_MODE_TRIP;
-  61   1      
-  62   1          aip3368h_display_mileage_value(mileage_value, display_mode);
-  63   1          aip3368h_display_mileage_mode_lights(is_display_total_mileage);
-  64   1      }
-  65          
-  66          // 总里程扫描
-  67          void mileage_scan(void)
-  68          {
-  69   1          /*
-  70   1              是否有里程数据需要保存的标志变量，
-  71   1              0--没有里程变化，不需要保存，
-  72   1              1--有里程变化，需要保存
-  73   1              目前每过1m就会置位一次，保存之后清零
-  74   1          */
-  75   1          static volatile bit flag_is_any_mileage_save;
-  76   1      
-  77   1          // 每过1s，且里程有变化，就保存一次；这个里程变化的条件最好大于10m，否�
+  53   1          u8 is_display_total_mileage = instrument.save_info.is_display_total_mileage;
+  54   1          u32 mileage_value = is_display_total_mileage
+  55   1                                  ? instrument.save_info.total_mileage
+  56   1                                  : instrument.save_info.subtotal_mileage;
+  57   1          u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
+  58   1                                                     : MILEAGE_DISPLAY_MODE_TRIP;
+  59   1      
+  60   1          aip3368h_display_mileage_value(mileage_value, display_mode);
+  61   1          aip3368h_display_mileage_mode_lights(is_display_total_mileage);
+  62   1      }
+  63          
+  64          // 总里程扫描
+  65          void mileage_scan(void)
+  66          {
+  67   1          /*
+  68   1              是否有里程数据需要保存的标志变量，
+  69   1              0--没有里程变化，不需要保存，
+  70   1              1--有里程变化，需要保存
+  71   1              目前每过1m就会置位一次，保存之后清零
+  72   1          */
+  73   1          static volatile bit flag_is_any_mileage_save;
+  74   1      
+  75   1          // 每过1s，且里程有变化，就保存一次；这个里程变化的条件最好大于10m，否�
              -��会经常写入eeprom
-  78   1          if ((mileage_save_time_cnt >= (u16)5 * 1000) && /* xx ms后 */
-  79   1              flag_is_any_mileage_save)                   /* 里程有变化，需要保存 */
-  80   1          {
-  81   2              instrument_info_save_enable();
-  82   2              flag_is_any_mileage_save = 0;
-  83   2              mileage_save_time_cnt = 0;
+  76   1          if ((mileage_save_time_cnt >= (u16)5 * 1000) && /* xx ms后 */
+  77   1              flag_is_any_mileage_save)                   /* 里程有变化，需要保存 */
+  78   1          {
+  79   2              instrument_info_save_enable();
+  80   2              flag_is_any_mileage_save = 0;
+  81   2              mileage_save_time_cnt = 0;
+  82   2      
+  83   2              // printf("mile save\n");
   84   2      
-  85   2              // printf("mile save\n");
-  86   2      
-  87   2              // printf("total_mileage %lu\n", instrument.save_info.total_mileage);
-  88   2              // printf("sub_total_mileage %lu\n",
-  89   2              // instrument.save_info.subtotal_mileage); printf("sub_total_mileage_2
-  90   2              // %lu\n", instrument.save_info.subtotal_mileage_2);
-  91   2          }
-  92   1      
-  93   1          if (distance >= 1000) // 1000mm -- 1m
-  94   1          {
-  95   2              // 如果走过的距离超过了1m，再进行保存（保存到变量）
-  96   2              // 99 9999 KM
-  97   2              if (instrument.save_info.total_mileage < (u32)(999999 * 1000)) {
-  98   3                  instrument.save_info.total_mileage++; // +1m
-  99   3              }
- 100   2      
- 101   2              // 99999.9 KM
- 102   2              if (instrument.save_info.subtotal_mileage < (u32)(999999 * 100)) {
- 103   3                  instrument.save_info.subtotal_mileage++; // +1m
- 104   3              }
+  85   2              // printf("total_mileage %lu\n", instrument.save_info.total_mileage);
+  86   2              // printf("sub_total_mileage %lu\n",
+  87   2              // instrument.save_info.subtotal_mileage); printf("sub_total_mileage_2
+  88   2              // %lu\n", instrument.save_info.subtotal_mileage_2);
+  89   2          }
+  90   1      
+  91   1          if (distance >= 1000) // 1000mm -- 1m
+  92   1          {
+  93   2              // 如果走过的距离超过了1m，再进行保存（保存到变量）
+  94   2              // 99 9999 KM
+  95   2              if (instrument.save_info.total_mileage < (u32)(999999 * 1000)) {
+  96   3                  instrument.save_info.total_mileage++; // +1m
+  97   3              }
+  98   2      
+  99   2              // 99999.9 KM
+ 100   2              if (instrument.save_info.subtotal_mileage < (u32)(999999 * 100)) {
+ 101   3                  instrument.save_info.subtotal_mileage++; // +1m
+ 102   3              }
+ 103   2      
+ 104   2              distance -= 1000; // 剩下的、未保存的、不满1m的数据留到下一次再保存
  105   2      
- 106   2              distance -= 1000; // 剩下的、未保存的、不满1m的数据留到下一次再保存
- 107   2      
- 108   2              {
- 109   3                  static u8 cnt = 0;
- 110   3                  cnt++;
- 111   3                  // if (cnt >= 10) // cnt >= 10，说明走过了10m
- 112   3                  if (cnt >= 100) {
- 113   4                      cnt = 0;
-C51 COMPILER V9.60.7.0   MILEAGE                                                           08/13/2026 17:54:51 PAGE 3   
+ 106   2              {
+ 107   3                  static u8 cnt = 0;
+ 108   3                  cnt++;
+ 109   3                  // if (cnt >= 10) // cnt >= 10，说明走过了10m
+ 110   3                  if (cnt >= 100) {
+ 111   4                      cnt = 0;
+ 112   4                      flag_is_any_mileage_save = 1; // 表示需要把里程输入写入到flash
+ 113   4                  }
+C51 COMPILER V9.60.7.0   MILEAGE                                                           08/14/2026 16:22:47 PAGE 3   
 
- 114   4                      flag_is_any_mileage_save = 1; // 表示需要把里程输入写入到flash
- 115   4                  }
- 116   3              }
- 117   2          }
- 118   1      }
+ 114   3              }
+ 115   2          }
+ 116   1      }
+ 117          
+ 118          #if 1
  119          
- 120          #if 1
- 121          
- 122          /**
- 123           * @brief 显示里程，由ui调用
- 124           *
- 125           */
- 126          void aip3368h_display_mileage_handle(void)
- 127          {
- 128   1          static u8 is_initialized = 0;
- 129   1      
- 130   1          if (0 == is_initialized) {
- 131   2              is_initialized = 1;
- 132   2              // 显示单位
- 133   2              if (DISTANCE_UNIT_TYPE_METRIC ==
- 134   2                  instrument.save_info.distance_unit_type) {
- 135   3                  // 公制单位，km
- 136   3                  aip3368h_display_miles_light(0);
- 137   3                  aip3368h_display_km_light(1);
- 138   3              } else {
- 139   3                  // 英制单位：miles
- 140   3                  aip3368h_display_km_light(0);
- 141   3                  aip3368h_display_miles_light(1);
- 142   3              }
- 143   2      
- 144   2              if (instrument.save_info.is_display_total_mileage) {
- 145   3                  // 显示总里程
- 146   3                  aip3368h_display_trip_light(0);
- 147   3                  aip3368h_display_odo_light(1);
- 148   3              } else {
- 149   3                  // 显示当前里程（小计里程）
- 150   3                  aip3368h_display_odo_light(0);
- 151   3                  aip3368h_display_trip_light(1);
- 152   3              }
- 153   2      
- 154   2              aip3368h_display_mileage_refresh();
- 155   2              aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
- 156   2          }
- 157   1      
- 158   1          if (mileage_update_time_cnt >= MILEAGE_UPDATE_TIME_MS) {
- 159   2              // 每隔一段时间，更新里程
- 160   2              mileage_update_time_cnt = 0;
- 161   2              aip3368h_display_mileage_refresh();
- 162   2          }
- 163   1      }
- 164          #endif
+ 120          /**
+ 121           * @brief 显示里程，由ui调用
+ 122           *
+ 123           */
+ 124          void aip3368h_display_mileage_handle(void)
+ 125          {
+ 126   1          static u8 is_initialized = 0;
+ 127   1      
+ 128   1          if (0 == is_initialized) {
+ 129   2              is_initialized = 1;
+ 130   2              // 显示单位
+ 131   2              if (DISTANCE_UNIT_TYPE_METRIC ==
+ 132   2                  instrument.save_info.distance_unit_type) {
+ 133   3                  // 公制单位，km
+ 134   3                  aip3368h_display_miles_light(0);
+ 135   3                  aip3368h_display_km_light(1);
+ 136   3              } else {
+ 137   3                  // 英制单位：miles
+ 138   3                  aip3368h_display_km_light(0);
+ 139   3                  aip3368h_display_miles_light(1);
+ 140   3              }
+ 141   2      
+ 142   2              if (instrument.save_info.is_display_total_mileage) {
+ 143   3                  // 显示总里程
+ 144   3                  aip3368h_display_trip_light(0);
+ 145   3                  aip3368h_display_odo_light(1);
+ 146   3              } else {
+ 147   3                  // 显示当前里程（小计里程）
+ 148   3                  aip3368h_display_odo_light(0);
+ 149   3                  aip3368h_display_trip_light(1);
+ 150   3              }
+ 151   2      
+ 152   2              aip3368h_display_mileage_refresh();
+ 153   2              aip3368h_display_mileage_unit_lights(instrument.save_info.distance_unit_type);
+ 154   2          }
+ 155   1      
+ 156   1          if (mileage_update_time_cnt >= MILEAGE_UPDATE_TIME_MS) {
+ 157   2              // 每隔一段时间，更新里程
+ 158   2              mileage_update_time_cnt = 0;
+ 159   2              aip3368h_display_mileage_refresh();
+ 160   2          }
+ 161   1      }
+ 162          #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
@@ -190,8 +188,6 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      1    ----
 END OF MODULE INFORMATION.
-
-C51 COMPILER V9.60.7.0   MILEAGE                                                           08/13/2026 17:54:51 PAGE 4   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

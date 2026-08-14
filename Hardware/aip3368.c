@@ -10,17 +10,18 @@
 static volatile u16 aip3368h_refresh_cnt = 0;
 
 // 时速面板对应的显存
-volatile u16 aip3368h_speed_panel_display_buff[AIP3368H_SPEED_PANEL_IC_NUM] = {0};
+volatile u16 aip3368h_speed_panel_display_buff[AIP3368H_SPEED_PANEL_IC_NUM] = {
+    0};
 
 // 发动机转速面板对应的显存
-volatile u16 aip3368h_engine_speed_panel_display_buff[AIP3368H_ENGINE_SPEED_PANEL_IC_NUM] = {0};
+volatile u16 aip3368h_engine_speed_panel_display_buff
+    [AIP3368H_ENGINE_SPEED_PANEL_IC_NUM] = {0};
 
 // 放在1ms的定时器中
 void aip3368h_refresh_time_add(void)
 {
     // 防止计数溢出
-    if (aip3368h_refresh_cnt < ((u16)-1))
-    {
+    if (aip3368h_refresh_cnt < ((u16)-1)) {
         aip3368h_refresh_cnt++;
     }
 }
@@ -53,11 +54,10 @@ static void aip3368h_module_send_data_to_one_dev(u16 dat_group_1, u16 dat_group_
 }
 #endif
 
-static void aip3368h_module_send_data_to_all_dev(
-    const u16 *buff_group_1,
-    const u8 len_group_1,
-    const u16 *buff_group_2,
-    const u8 len_group_2)
+static void aip3368h_module_send_data_to_all_dev(const u16 *buff_group_1,
+                                                 const u8 len_group_1,
+                                                 const u16 *buff_group_2,
+                                                 const u8 len_group_2)
 {
     volatile u8 i;
     volatile u8 j;
@@ -85,24 +85,20 @@ static void aip3368h_module_send_data_to_all_dev(
     aip3368h_delay();
 
     // 一帧完整数据
-    for (i = 0; i < AIP3368_MAX_IC_NUM; i++)
-    {
+    for (i = 0; i < AIP3368_MAX_IC_NUM; i++) {
         // 本组数据在帧中的位置：i < offset 的部分补 0（会被移出级联链）
         dat_group_1 = 0;
         dat_group_2 = 0;
 
-        if (i >= offset_group_1)
-        {
+        if (i >= offset_group_1) {
             dat_group_1 = buff_group_1[i - offset_group_1];
         }
 
-        if (i >= offset_group_2)
-        {
+        if (i >= offset_group_2) {
             dat_group_2 = buff_group_2[i - offset_group_2];
         }
 
-        for (j = 0; j < 16; j++)
-        {
+        for (j = 0; j < 16; j++) {
             DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
             DIO_GROUP_2 = dat_group_2 & (u16)0x8000 ? 1 : 0;
 
@@ -137,9 +133,7 @@ void aip3368h_module_display(void)
     // if (aip3368h_refresh_cnt < 500)
     {
         return;
-    }
-    else
-    {
+    } else {
         aip3368h_refresh_cnt = 0;
     }
 
@@ -153,29 +147,33 @@ void aip3368h_module_display(void)
     //        aip3368h_speed_panel_display_buff[0]);
 
     // 闪烁测试
-    if (aip3368h_speed_panel_display_buff[0] == (u16)0x0000)
-    {
-        memset(aip3368h_speed_panel_display_buff, 0xFF, sizeof(aip3368h_speed_panel_display_buff));
-        memset(aip3368h_engine_speed_panel_display_buff, 0xFF, sizeof(aip3368h_engine_speed_panel_display_buff));
-    }
-    else
-    {
-        memset(aip3368h_speed_panel_display_buff, 0x00, sizeof(aip3368h_speed_panel_display_buff));
-        memset(aip3368h_engine_speed_panel_display_buff, 0x00, sizeof(aip3368h_engine_speed_panel_display_buff));
+    if (aip3368h_speed_panel_display_buff[0] == (u16)0x0000) {
+        memset(aip3368h_speed_panel_display_buff, 0xFF,
+               sizeof(aip3368h_speed_panel_display_buff));
+        memset(aip3368h_engine_speed_panel_display_buff, 0xFF,
+               sizeof(aip3368h_engine_speed_panel_display_buff));
+    } else {
+        memset(aip3368h_speed_panel_display_buff, 0x00,
+               sizeof(aip3368h_speed_panel_display_buff));
+        memset(aip3368h_engine_speed_panel_display_buff, 0x00,
+               sizeof(aip3368h_engine_speed_panel_display_buff));
     }
 
 #endif
 
     aip3368h_module_send_data_to_all_dev(
         aip3368h_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM,
-        aip3368h_engine_speed_panel_display_buff, AIP3368H_ENGINE_SPEED_PANEL_IC_NUM);
+        aip3368h_engine_speed_panel_display_buff,
+        AIP3368H_ENGINE_SPEED_PANEL_IC_NUM);
 }
 
 void aip3368h_module_init(void)
 {
     // 显示驱动芯片有记忆功能（数据锁存），每次上电应该清空显存
-    memset(aip3368h_speed_panel_display_buff, 0x00, sizeof(aip3368h_speed_panel_display_buff));
-    memset(aip3368h_engine_speed_panel_display_buff, 0x00, sizeof(aip3368h_engine_speed_panel_display_buff));
+    memset(aip3368h_speed_panel_display_buff, 0x00,
+           sizeof(aip3368h_speed_panel_display_buff));
+    memset(aip3368h_engine_speed_panel_display_buff, 0x00,
+           sizeof(aip3368h_engine_speed_panel_display_buff));
 
     // DCK
     P1_MD0 &= ~GPIO_P11_MODE_SEL(0x03);
@@ -199,13 +197,16 @@ void aip3368h_module_init(void)
     P1_MD1 |= GPIO_P16_MODE_SEL(0x01);
     FOUT_S16 = GPIO_FOUT_STMR0_PWMOUT; // 选择stmr0_pwmout
 
-#define STMR0_PEROID_VAL (SYSCLK / 1 / 1000 - 1) // 周期值=系统时钟/分频/频率 - 1
+#define STMR0_PEROID_VAL                                                       \
+    (SYSCLK / 1 / 1000 - 1) // 周期值=系统时钟/分频/频率 - 1
     // STIMER0配置1kHz PWM
-    STMR0_PSC = STMR_PRESCALE_VAL(0x00);                        // 不分频
-    STMR0_PRH = STMR_PRD_VAL_H((STMR0_PEROID_VAL >> 8) & 0xFF); // 周期高八位寄存器
-    STMR0_PRL = STMR_PRD_VAL_L((STMR0_PEROID_VAL >> 0) & 0xFF); // 周期低八位寄存器
-    STMR0_CMPAH = STMR_CMPA_VAL_H(((0) >> 8) & 0xFF);           // 比较值
-    STMR0_CMPAL = STMR_CMPA_VAL_L(((0) >> 0) & 0xFF);           // 比较值
+    STMR0_PSC = STMR_PRESCALE_VAL(0x00); // 不分频
+    STMR0_PRH =
+        STMR_PRD_VAL_H((STMR0_PEROID_VAL >> 8) & 0xFF); // 周期高八位寄存器
+    STMR0_PRL =
+        STMR_PRD_VAL_L((STMR0_PEROID_VAL >> 0) & 0xFF); // 周期低八位寄存器
+    STMR0_CMPAH = STMR_CMPA_VAL_H(((0) >> 8) & 0xFF);   // 比较值
+    STMR0_CMPAL = STMR_CMPA_VAL_L(((0) >> 0) & 0xFF);   // 比较值
 
     STMR_PWMVALA = STMR_0_PWMVALA(0x00); // PWM输出值
     STMR_PWMEN |= STMR_0_PWM_EN(0x1);    // PWM输出使能
@@ -219,12 +220,14 @@ void aip3368h_module_init(void)
     DCK = 0;
     LAT = 0;
     // PDM = 0; // 由上电稳定之后设置亮度
+
+    // 显示驱动芯片带有记忆功能，上电之后需要先写入一次全为0的数据，再写入实际数据
     aip3368h_module_send_data_to_all_dev(
         aip3368h_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM,
         aip3368h_engine_speed_panel_display_buff, AIP3368H_SPEED_PANEL_IC_NUM);
 
     // TEST ONLY 样机使用最高亮度，实际使用时根据需要调整
-    aip3368h_module_set_brightness(30);
+    aip3368h_module_set_brightness(100);
 }
 
 /**

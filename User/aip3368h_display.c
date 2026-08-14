@@ -695,7 +695,7 @@ void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
 void aip3368h_display_time_colon_light(u8 is_display)
 {
     if (is_display) {
-        aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 6;
+        aip3368h_engine_speed_panel_display_buff[1] |= (0x01 << 6);
     } else {
         aip3368h_engine_speed_panel_display_buff[1] &= ~(0x01 << 6);
     }
@@ -784,36 +784,6 @@ void aip3368h_display_time_digits_when_setting(u8 is_display, u8 num,
 }
 
 /**
- * @brief 在设置时间时，显示当前设置的时间
- * 
- * @param is_display 是否显示
- * 
- * @param aip1302_info 存放时间信息的结构体变量
- * 
- * @param 当前是否在设置分钟
- *          0 ： 当前在设置小时
- *          1 ： 当前在设置分钟 
- * 
- */
-void aip3368h_display_time_when_setting(u8 is_display,
-                                        aip1302_info_t aip1302_info,
-                                        u8 is_setting_min)
-{
-    if (is_display) {
-        if (is_setting_min) {
-            aip3368h_display_time(aip1302_info.time_hour,
-                                  aip1302_info.time_min);
-        } else {
-        }
-    } else {
-        if (is_setting_min) {
-            aip3368h_display_time(0, 0);
-        } else {
-        }
-    }
-}
-
-/**
  * @brief 油量 E 字样对应的指示灯（油量 empty）
  *
  * @param is_display 是否显示
@@ -879,6 +849,7 @@ void __aip3368h_display_fuel_lev_upper_marker__(u8 idx, u8 is_display)
     }
 }
 
+#if 0
 /**
  * @brief 油量格数上方的顶部标记
  *
@@ -902,6 +873,7 @@ void aip3368h_display_fuel_lev_upper_marker(u8 is_display)
         }
     }
 }
+#endif
 
 /**
  * @brief 油量格数对应的指示灯
@@ -1160,6 +1132,7 @@ void __aip3368h_display_speed_split_line_light__(u8 idx, u8 is_display)
     }
 }
 
+#if 0
 /**
  * @brief 时速面板上的分割线对应的指示灯
  *
@@ -1173,6 +1146,7 @@ void aip3368h_display_speed_split_line_light(u8 is_display)
         __aip3368h_display_speed_split_line_light__(i, is_display);
     }
 }
+#endif
 
 /**
  * @brief TRIP 字样对应的指示灯
@@ -1371,6 +1345,7 @@ void __aip3368h_display_bat_lev_upper_marker_light__(u8 idx, u8 is_display)
     }
 }
 
+#if 0
 /**
  * @brief 电池电量上方的顶部标记对应的指示灯
  *
@@ -1384,6 +1359,7 @@ void aip3368h_display_bat_lev_upper_marker_light(u8 is_display)
         __aip3368h_display_bat_lev_upper_marker_light__(i, is_display);
     }
 }
+#endif
 
 /**
  * @brief 电池电量对应的指示灯

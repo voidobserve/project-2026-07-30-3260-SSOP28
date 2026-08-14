@@ -1,5 +1,6 @@
 #include "tmr1.h"
 #include "include.h"
+#include "user_config.h"
 
 #include "mileage.h"
 #include "aip3368h_display.h"
@@ -11,7 +12,7 @@
 #include "ui.h"
 
 #if USER_DEBUG_ENABLE
-#include "aip1302.h" // TEST ONLY 测试完成后，应该删除
+// #include "aip1302.h" // TEST ONLY 测试完成后，应该删除
 #endif
 
 // 定时器定时周期 (单位:Hz)

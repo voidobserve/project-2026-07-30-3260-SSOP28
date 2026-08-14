@@ -7,15 +7,25 @@
 #if ENGINE_SPEED_SCAN_ENABLE
 
 // ======================================================
-// 检测发动机转速所需的配置：
+// 检测发动机转速所需的配置（检测霍尔元器件传过来的信号）：
 #define ENGINE_SPEED_SCAN_PIN P27 // 检测发动机转速的引脚
-// 检测到 多少个脉冲 表示 发动机转过一圈
-// #define ENGINE_SPEED_SCAN_PULSE_PER_TURN (60)
 
+// 检测发动机转速的另一个引脚（检测16PIN中传过来的信号）：
+#define ENGINE_SPEED_SCAN_PIN_EXPEND P26
+
+// ============================================================
+//
 // 检测到一个脉冲表示发动机转了 xx 圈，单位：0.001圈
-#define ENGINE_SPEED_SCAN_A_PULSE_PER_TURNS ((u32)2000)
+#define ENGINE_SPEED_SCAN_A_PULSE_PER_TURNS ((u32)1057 * 2)
 // 补偿系数，根据上面的宏对应的单位，需要利用该系数，恢复成以1圈为单位的值
 #define ENGINE_SPEED_SCAN_COMPONSATION ((u32)1000)
+// ============================================================
+//
+// 检测到一个脉冲表示发动机转了 xx 圈，单位：0.001圈
+#define ENGINE_SPEED_SCAN_A_PULSE_PER_TURNS_EXPEND ((u32)1000)
+// 补偿系数，根据上面的宏对应的单位，需要利用该系数，恢复成以1圈为单位的值
+#define ENGINE_SPEED_SCAN_COMPONSATION_EXPEND ((u32)1000)
+// ============================================================
 
 // 发动机转速的更新时间，单位：ms
 #define ENGINE_SPEED_SCAN_UPDATE_TIME (500)

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              08/13/2026 17:54:51 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              08/14/2026 16:22:47 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -50,30 +50,30 @@ line level    source
   39          #include "battery.h"
   40          
   41          #if USER_DEBUG_ENABLE
-  42          #include "uart0.h"
-  43          
-  44          /**
-  45           * @brief 初始化调试引脚，观察引脚电平翻转
-  46           *
-  47           */
-  48          // void debug_pin_init(void)
-  49          // {
-  50          //     // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
-  51          //     // P0_MD0 |= GPIO_P00_MODE_SEL(0x01); // 输出模式
-  52          //     // FOUT_S00 = GPIO_FOUT_AF_FUNC;
-  53          //     // DEBUG_PIN = 0;
-C51 COMPILER V9.60.7.0   MAIN                                                              08/13/2026 17:54:51 PAGE 2   
+              #include "uart0.h"
+              
+              /**
+               * @brief 初始化调试引脚，观察引脚电平翻转
+               *
+               */
+              // void debug_pin_init(void)
+              // {
+              //     // P0_MD0 &= ~GPIO_P00_MODE_SEL(0x03);
+              //     // P0_MD0 |= GPIO_P00_MODE_SEL(0x01); // 输出模式
+              //     // FOUT_S00 = GPIO_FOUT_AF_FUNC;
+              //     // DEBUG_PIN = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/14/2026 16:22:47 PAGE 2   
 
-  54          // }
-  55          #endif
+              // }
+              #endif
   56          
   57          void user_init(void)
   58          {
   59   1      #if USER_DEBUG_ENABLE
-  60   1          // debug_pin_init();
-  61   1          uart0_debug_init();
-  62   1          printf("sys reset\n");
-  63   1      #endif
+                  // debug_pin_init();
+                  uart0_debug_init();
+                  printf("sys reset\n");
+              #endif
   64   1      
   65   1      #if PIN_LEVEL_SCAN_ENABLE
   66   1          pin_level_scan_config();
@@ -84,8 +84,8 @@ line level    source
   71   1      #endif
   72   1      
   73   1      #if SPEED_SCAN_ENABLE
-                  speed_scan_config(); // 时速扫描的配置
-              #endif
+  74   1          speed_scan_config(); // 时速扫描的配置
+  75   1      #endif
   76   1      
   77   1      #if ENGINE_SPEED_SCAN_ENABLE
   78   1          engine_speed_scan_config(); // 发动机转速扫描的配置
@@ -126,9 +126,9 @@ line level    source
  112   1          ui_manager_init();
  113   1      
  114   1          // 上电之后，需要先跑一遍开机动画，再继续主循环
-C51 COMPILER V9.60.7.0   MAIN                                                              08/13/2026 17:54:51 PAGE 3   
+C51 COMPILER V9.60.7.0   MAIN                                                              08/14/2026 16:22:47 PAGE 3   
 
- 115   1          // boot_animation_process();
+ 115   1          boot_animation_process();
  116   1      
  117   1          /* 系统主循环 */
  118   1          while (1) {
@@ -147,8 +147,8 @@ line level    source
  131   2      #endif
  132   2      
  133   2      #if SPEED_SCAN_ENABLE
-                      speed_scan(); // 检测时速
-              #endif
+ 134   2              speed_scan(); // 检测时速
+ 135   2      #endif
  136   2              mileage_scan(); // 检测大计里程和小计里程
  137   2      
  138   2      #if FUEL_CAPACITY_SCAN_ENABLE
@@ -174,8 +174,8 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    106    ----
-   CONSTANT SIZE    =     11    ----
+   CODE SIZE        =    103    ----
+   CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
